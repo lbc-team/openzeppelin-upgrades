@@ -1,57 +1,57 @@
 = OpenZeppelin Hardhat Upgrades API
 
-Both `deployProxy` and `upgradeProxy` functions will return instances of https://docs.ethers.io/v5/api/contract/contract[ethers.js contracts], and require https://docs.ethers.io/v5/api/contract/contract-factory[ethers.js contract factories] as arguments. For https://docs.openzeppelin.com/contracts/api/proxy#beacon[beacons], `deployBeacon` and `upgradeBeacon` will both return an upgradable beacon instance that can be used with a beacon proxy. All deploy and upgrade functions validate that the implementation contract is upgrade-safe, and will fail otherwise.
+`deployProxy` 和 `upgradeProxy` 函数都将返回 https://docs.ethers.io/v5/api/contract/contract[ethers.js contracts] 的实例，并且需要 https://docs.ethers.io/v5/api/contract/contract-factory[ethers.js contract factories] 作为参数。对于 https://docs.openzeppelin.com/contracts/api/proxy#beacon[beacons]，`deployBeacon` 和 `upgradeBeacon` 都将返回一个可升级的 beacon 实例，该实例可以与 beacon proxy 一起使用。所有部署和升级函数都会验证 implementation contract 是否 upgrade-safe，否则将失败。
 
 [[common-options]]
-== Common Options
+== 常用选项
 
-The following options are common to some functions.
+以下选项是一些函数的通用选项。
 
-* `kind`: (`"uups" | "transparent" | "beacon"`) The kind of proxy to deploy, upgrade or import, or the kind of proxy that the implementation will be used with. `deployProxy()` and `upgradeProxy()` only support the values `"uups" | "transparent"`. Defaults to `"transparent"`. See xref:contracts:api:proxy.adoc#transparent-vs-uups[Transparent vs UUPS].
-* `unsafeAllow`: (`ValidationError[]`) Selectively disable one or more validation errors or warnings:
-** `"external-library-linking"`: Allows a deployment with external libraries linked to the implementation contract. (External libraries are otherwise xref:faq.adoc#why-cant-i-use-external-libraries[not yet supported].)
-** `"struct-definition"`, `"enum-definition"`: Used to be necessary to deploy a contract with structs or enums. No longer necessary.
-** `"state-variable-assignment"`: Allows assigning state variables in a contract even though they will be stored in the implementation.
-** `"state-variable-immutable"`: Allows use of immutable variables, which are not unsafe
-** `"constructor"`: Allows defining a constructor. See `constructorArgs`.
-** `"delegatecall"`, `"selfdestruct"`: Allow the use of these operations. Incorrect use of this option can put funds at risk of permanent loss. See xref:faq.adoc#delegatecall-selfdestruct[Can I safely use `delegatecall` and `selfdestruct`?]
-** `"missing-public-upgradeto"`: Allow UUPS implementations that do not contain a public `upgradeTo` or `upgradeToAndCall` function. Enabling this option is likely to cause a revert due to the built-in UUPS safety mechanism.
-** `"internal-function-storage"`: Allow internal functions in storage variables. Internal functions are code pointers which will no longer be valid after an upgrade, so they must be reassigned during upgrades. See xref:faq.adoc#internal-function-storage[How can I use internal functions in storage variables?]
-** `"missing-initializer"`: Allows implementations where an initializer function is not detected.
-** `"missing-initializer-call"`: Allows implementations where a parent initializer is not called from the child initializer.
-** `"duplicate-initializer-call"`: Allows implementations where a parent initializer is called more than once from the child initializer.
-** `"incorrect-initializer-order"`: Allows implementations where parent initializers are not called in linearized order. *Note*: This condition shows a warning by default, and setting this option will silence the warning.
-* `unsafeAllowRenames`: (`boolean`) Configure storage layout check to allow variable renaming.
-* `unsafeSkipStorageCheck`: (`boolean`) upgrades the proxy or beacon without first checking for storage layout compatibility errors. This is a dangerous option meant to be used as a last resort.
-* `constructorArgs`: (`unknown[]`) Provide arguments for the constructor of the implementation contract. Note that these are different from initializer arguments, and will be used in the deployment of the implementation contract itself. Can be used to initialize immutable variables.
-* `initialOwner`: (`string`) the address to set as the initial owner of a transparent proxy's admin or initial owner of a beacon. Defaults to the externally owned account that is deploying the transparent proxy or beacon. Not supported for UUPS proxies.
-** *Since:* `@openzeppelin/hardhat-upgrades@3.0.0`
-* `unsafeSkipProxyAdminCheck`: (`boolean`) Skips checking the `initialOwner` option when deploying a transparent proxy. When deploying a transparent proxy, the `initialOwner` must be the address of an EOA or a contract that can call functions on a ProxyAdmin. It must not be a ProxyAdmin contract itself. Use this if you encounter an error due to this check and are sure that the `initialOwner` is not a ProxyAdmin contract.
-** *Since:* `@openzeppelin/hardhat-upgrades@3.4.0`
-* `timeout`: (`number`) Timeout in milliseconds to wait for the transaction confirmation when deploying an implementation contract. Defaults to `60000`. Use `0` to wait indefinitely.
-* `pollingInterval`: (`number`) Polling interval in milliseconds between checks for the transaction confirmation when deploying an implementation contract. Defaults to `5000`.
-* `redeployImplementation`: (`"always" | "never" | "onchange"`) Determines whether the implementation contract will be redeployed. Defaults to `"onchange"`.
-** If set to `"always"`, the implementation contract is always redeployed even if it was previously deployed with the same bytecode. This can be used with the `salt` option when deploying a proxy through OpenZeppelin Defender to ensure that the implementation contract is deployed with the same salt as the proxy.
-** If set to `"never"`, the implementation contract is never redeployed. If the implementation contract was not previously deployed or is not found in the network file, an error will be thrown.
-** If set to `"onchange"`, the implementation contract is redeployed only if the bytecode has changed from previous deployments.
-* `txOverrides`: (`ethers.Overrides`) An ethers.js https://docs.ethers.org/v6/api/contract/#Overrides[Overrides] object to override transaction parameters, such as `gasLimit` and `gasPrice`. Applies to all transactions sent by a function with this option, even if the function sends multiple transactions. For OpenZeppelin Defender deployments, only the `gasLimit`, `gasPrice`, `maxFeePerGas`, and `maxPriorityFeePerGas` parameters are supported.
-* `useDefenderDeploy`: (`boolean`) Deploy contracts using OpenZeppelin Defender instead of ethers.js. See xref:defender-deploy.adoc[Using with OpenZeppelin Defender].
-* `verifySourceCode`: (`boolean`) When using OpenZeppelin Defender deployments, whether to verify source code on block explorers. Defaults to `true`.
-* `relayerId`: (`string`) When using OpenZeppelin Defender deployments, the ID of the relayer to use for the deployment. Defaults to the relayer configured for your deployment environment on Defender.
-* `salt`: (`string`) When using OpenZeppelin Defender deployments, if this is not set, deployments will be performed using the CREATE opcode. If this is set, deployments will be performed using the CREATE2 opcode with the provided salt. Note that deployments using a Safe are done using CREATE2 and require a salt. **Warning:** CREATE2 affects `msg.sender` behavior. See https://docs.openzeppelin.com/defender/tutorial/deploy#deploy-caveat[Caveats] for more information.
-* `metadata`: (`{ commitHash?: string; tag?: string; [k: string]: any; }`) When using OpenZeppelin Defender deployments, you can use this to identify, tag, or classify deployments. See https://docs.openzeppelin.com/defender/module/deploy#metadata[Metadata].
-* `proxyFactory`: (`ethers.ContractFactory`) Customizes the ethers contract factory to use for deploying the proxy, allowing a custom proxy contract to be deployed. See https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/master/packages/plugin-hardhat/src/utils/factories.ts[factories.ts] for the default contract factory for each kind of proxy.
-** *Since:* `@openzeppelin/hardhat-upgrades@3.7.0`
-* `deployFunction`: (`(hre, opts, factory, ...args) => Promise<EthersOrDefenderDeployment>`) Customizes the function used to deploy the proxy. Can be used along with the `proxyFactory` option to override constructor parameters for custom proxy deployments. See https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/master/packages/plugin-hardhat/src/utils/deploy.ts[deploy.ts] for the default deploy function.
-** *Since:* `@openzeppelin/hardhat-upgrades@3.7.0`
+* `kind`: (`"uups" | "transparent" | "beacon"`) 要部署、升级或导入的代理的类型，或 implementation 将使用的代理的类型。`deployProxy()` 和 `upgradeProxy()` 仅支持 `"uups" | "transparent"` 值。默认为 `"transparent"`。请参阅 xref:contracts:api:proxy.adoc#transparent-vs-uups[Transparent vs UUPS]。
+* `unsafeAllow`: (`ValidationError[]`) 有选择地禁用一个或多个验证错误或警告：
+** `"external-library-linking"`：允许部署链接到 implementation contract 的外部库。（外部库目前 xref:faq.adoc#why-cant-i-use-external-libraries[尚不支持]。）
+** `"struct-definition"`, `"enum-definition"`：过去需要使用 structs 或 enums 部署 contract。现在不再需要。
+** `"state-variable-assignment"`：允许在一个 contract 中分配状态变量，即使它们将存储在 implementation 中。
+** `"state-variable-immutable"`：允许使用 immutable 变量，这些变量是安全的
+** `"constructor"`：允许定义构造函数。请参阅 `constructorArgs`。
+** `"delegatecall"`, `"selfdestruct"`：允许使用这些操作。不正确地使用此选项可能会导致资金永久损失的风险。请参阅 xref:faq.adoc#delegatecall-selfdestruct[我可以安全地使用 `delegatecall` 和 `selfdestruct` 吗？]
+** `"missing-public-upgradeto"`：允许不包含公共 `upgradeTo` 或 `upgradeToAndCall` 函数的 UUPS implementations。启用此选项很可能导致由于内置的 UUPS 安全机制而导致 revert。
+** `"internal-function-storage"`：允许在存储变量中使用内部函数。内部函数是指针，升级后将不再有效，因此必须在升级期间重新分配。请参阅 xref:faq.adoc#internal-function-storage[如何在存储变量中使用内部函数？]
+** `"missing-initializer"`：允许未检测到 initializer 函数的 implementations。
+** `"missing-initializer-call"`：允许子 initializer 未调用父 initializer 的 implementations。
+** `"duplicate-initializer-call"`：允许子 initializer 多次调用父 initializer 的 implementations。
+** `"incorrect-initializer-order"`：允许未按线性化顺序调用父 initializers 的 implementations。*注意*：默认情况下，此条件会显示警告，并且设置此选项将消除警告。
+* `unsafeAllowRenames`: (`boolean`) 配置存储布局检查以允许变量重命名。
+* `unsafeSkipStorageCheck`: (`boolean`) 升级代理或 beacon，而不首先检查存储布局兼容性错误。这是一个危险的选项，旨在用作最后的手段。
+* `constructorArgs`: (`unknown[]`) 提供 implementation contract 构造函数的参数。请注意，这些参数与 initializer 参数不同，将用于 implementation contract 本身的部署中。可用于初始化 immutable 变量。
+* `initialOwner`: (`string`) 要设置为 transparent proxy 的管理员的初始所有者地址或 beacon 的初始所有者地址。默认为部署 transparent proxy 或 beacon 的外部拥有的帐户。不支持 UUPS proxies。
+** *始于:* `@openzeppelin/hardhat-upgrades@3.0.0`
+* `unsafeSkipProxyAdminCheck`: (`boolean`) 部署 transparent proxy 时跳过检查 `initialOwner` 选项。部署 transparent proxy 时，`initialOwner` 必须是 EOA 的地址或可以在 ProxyAdmin 上调用函数的 contract。它不能是 ProxyAdmin contract 本身。如果您遇到由于此检查而导致的错误，并且确定 `initialOwner` 不是 ProxyAdmin contract，请使用此选项。
+** *始于:* `@openzeppelin/hardhat-upgrades@3.4.0`
+* `timeout`: (`number`) 部署 implementation contract 时等待交易确认的超时时间（以毫秒为单位）。默认为 `60000`。使用 `0` 无限期等待。
+* `pollingInterval`: (`number`) 部署 implementation contract 时检查交易确认的轮询间隔（以毫秒为单位）。默认为 `5000`。
+* `redeployImplementation`: (`"always" | "never" | "onchange"`) 确定是否将重新部署 implementation contract。默认为 `"onchange"`。
+** 如果设置为 `"always"`，即使 implementation contract 先前已使用相同的 bytecode 部署，也会始终重新部署 implementation contract。这可以与通过 OpenZeppelin Defender 部署代理时的 `salt` 选项一起使用，以确保 implementation contract 使用与代理相同的 salt 部署。
+** 如果设置为 `"never"`，则永远不会重新部署 implementation contract。如果 implementation contract 先前未部署或在网络文件中未找到，则会引发错误。
+** 如果设置为 `"onchange"`，则仅当 bytecode 与之前的部署相比发生更改时，才会重新部署 implementation contract。
+* `txOverrides`: (`ethers.Overrides`) 一个 ethers.js https://docs.ethers.org/v6/api/contract/#Overrides[Overrides] 对象，用于覆盖交易参数，例如 `gasLimit` 和 `gasPrice`。应用于具有此选项的函数发送的所有交易，即使该函数发送了多个交易。对于 OpenZeppelin Defender 部署，仅支持 `gasLimit`、`gasPrice`、`maxFeePerGas` 和 `maxPriorityFeePerGas` 参数。
+* `useDefenderDeploy`: (`boolean`) 使用 OpenZeppelin Defender 而不是 ethers.js 部署 contracts。请参阅 xref:defender-deploy.adoc[与 OpenZeppelin Defender 一起使用]。
+* `verifySourceCode`: (`boolean`) 使用 OpenZeppelin Defender 部署时，是否在区块浏览器上验证源代码。默认为 `true`。
+* `relayerId`: (`string`) 使用 OpenZeppelin Defender 部署时，用于部署的中继器的 ID。默认为在 Defender 上为您的部署环境配置的中继器。
+* `salt`: (`string`) 使用 OpenZeppelin Defender 部署时，如果未设置，将使用 CREATE 操作码执行部署。如果已设置，将使用 CREATE2 操作码以及提供的 salt 执行部署。请注意，使用 Safe 的部署是使用 CREATE2 完成的，并且需要 salt。**警告：** CREATE2 影响 `msg.sender` 行为。有关更多信息，请参阅 https://docs.openzeppelin.com/defender/tutorial/deploy#deploy-caveat[注意事项]。
+* `metadata`: (`{ commitHash?: string; tag?: string; [k: string]: any; }`) 使用 OpenZeppelin Defender 部署时，您可以使用它来标识、标记或分类部署。请参阅 https://docs.openzeppelin.com/defender/module/deploy#metadata[元数据]。
+* `proxyFactory`: (`ethers.ContractFactory`) 自定义用于部署代理的 ethers contract factory，允许部署自定义代理 contract。有关每种代理类型的默认 contract factory，请参阅 https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/master/packages/plugin-hardhat/src/utils/factories.ts[factories.ts]。
+** *始于:* `@openzeppelin/hardhat-upgrades@3.7.0`
+* `deployFunction`: (`(hre, opts, factory, ...args) => Promise<EthersOrDefenderDeployment>`) 自定义用于部署代理的函数。可以与 `proxyFactory` 选项一起使用，以覆盖自定义代理部署的构造函数参数。有关默认部署函数，请参阅 https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/master/packages/plugin-hardhat/src/utils/deploy.ts[deploy.ts]。
+** *始于:* `@openzeppelin/hardhat-upgrades@3.7.0`
 
-Note that the options `unsafeAllow` can also be specified in a more granular way directly in the source code if using Solidity >=0.8.2. See xref:faq.adoc#how-can-i-disable-checks[How can I disable some of the checks?]
+请注意，如果使用 Solidity >=0.8.2，也可以更精细地直接在源代码中指定 `unsafeAllow` 选项。请参阅 xref:faq.adoc#how-can-i-disable-checks[如何禁用某些检查？]
 
-The following options have been deprecated.
+以下选项已被弃用。
 
-* `unsafeAllowLinkedLibraries`: Equivalent to including `"external-library-linking"` in `unsafeAllow`.
-* `unsafeAllowCustomTypes`: Equivalent to including `"struct-definition"` and `"enum-definition"` in `unsafeAllow`. No longer necessary.
-* `useDeployedImplementation`: (`boolean`) Equivalent to setting `redeployImplementation` to `"never"`.
+* `unsafeAllowLinkedLibraries`: 等同于在 `unsafeAllow` 中包含 `"external-library-linking"`。
+* `unsafeAllowCustomTypes`: 等同于在 `unsafeAllow` 中包含 `"struct-definition"` 和 `"enum-definition"`。现在不再需要。
+* `useDeployedImplementation`: (`boolean`) 等同于将 `redeployImplementation` 设置为 `"never"`。
 
 [[deploy-proxy]]
 == deployProxy
@@ -79,21 +79,21 @@ async function deployProxy(
 ): Promise<ethers.Contract>
 ----
 
-Creates a UUPS or Transparent proxy given an ethers contract factory to use as implementation, and returns a contract instance with the proxy address and the implementation interface. If `args` is set, will call an initializer function `initialize` with the supplied args during proxy deployment.
+给定一个 ethers contract factory 用作 implementation，创建一个 UUPS 或 Transparent proxy，并返回一个具有代理地址和 implementation 接口的 contract 实例。如果设置了 `args`，将在代理部署期间使用提供的 args 调用 initializer 函数 `initialize`。
 
-If you call `deployProxy` several times for the same implementation contract, several proxies will be deployed, but only one implementation contract will be used.
+如果对同一 implementation contract 多次调用 `deployProxy`，将部署多个 proxies，但只会使用一个 implementation contract。
 
-*Parameters:*
+*参数：*
 
-* `Contract` - an ethers contract factory to use as the implementation.
-* `args` - arguments for the initializer function.
-* `opts` - an object with options:
-** `initializer`: set a different initializer function to call (see link:++https://docs.ethers.io/v5/api/utils/abi/interface/#Interface--specifying-fragments++[Specifying Fragments]), or specify `false` to disable initialization.
-** additional options as described in <<common-options>>.
+* `Contract` - 一个 ethers contract factory 用作 implementation。
+* `args` - initializer 函数的参数。
+* `opts` - 具有选项的对象：
+** `initializer`: 设置要调用的其他 initializer 函数（请参阅 link:++https://docs.ethers.io/v5/api/utils/abi/interface/#Interface--specifying-fragments++[指定片段]），或者指定 `false` 以禁用初始化。
+** <<common-options>> 中描述的其他选项。
 
-*Returns:*
+*返回值：*
 
-* a contract instance with the proxy address and the implementation interface.
+* 一个具有代理地址和 implementation 接口的 contract 实例。
 
 [[upgrade-proxy]]
 == upgradeProxy
@@ -118,19 +118,19 @@ async function upgradeProxy(
 ): Promise<ethers.Contract>
 ----
 
-Upgrades a UUPS or Transparent proxy at a specified address to a new implementation contract, and returns a contract instance with the proxy address and the new implementation interface.
+将指定地址的 UUPS 或 Transparent proxy 升级到新的 implementation contract，并返回一个具有代理地址和新 implementation 接口的 contract 实例。
 
-*Parameters:*
+*参数：*
 
-* `proxy` - the proxy address or proxy contract instance.
-* `Contract` - an ethers contract factory to use as the new implementation.
-* `opts` - an object with options:
-** `call`: enables the execution of an arbitrary function call during the upgrade process. This call is described using a function name, signature, or selector (see https://docs.ethers.io/v5/api/utils/abi/interface/#Interface--specifying-fragments[Specifying Fragments]), and optional arguments. It is batched into the upgrade transaction, making it safe to call migration initializing functions.
-** additional options as described in <<common-options>>.
+* `proxy` - 代理地址或代理 contract 实例。
+* `Contract` - 一个 ethers contract factory 用作新的 implementation。
+* `opts` - 具有选项的对象：
+** `call`: 启用在升级过程中执行任意函数调用。此调用使用函数名称、签名或选择器（请参阅 https://docs.ethers.io/v5/api/utils/abi/interface/#Interface--specifying-fragments[指定片段]）和可选参数进行描述。它被批处理到升级交易中，从而可以安全地调用迁移初始化函数。
+** <<common-options>> 中描述的其他选项。
 
-*Returns:*
+*返回值：*
 
-* a contract instance with the proxy address and the new implementation interface.
+* 一个具有代理地址和新 implementation 接口的 contract 实例。
 
 [[deploy-beacon]]
 == deployBeacon
@@ -151,19 +151,19 @@ async function deployBeacon(
 ): Promise<ethers.Contract>
 ----
 
-Creates an https://docs.openzeppelin.com/contracts/api/proxy#UpgradeableBeacon[upgradable beacon] given an ethers contract factory to use as implementation, and returns the beacon contract instance.
+给定一个 ethers contract factory 用作 implementation，创建一个 https://docs.openzeppelin.com/contracts/api/proxy#UpgradeableBeacon[upgradable beacon]，并返回 beacon contract 实例。
 
-*Parameters:*
+*参数：*
 
-* `Contract` - an ethers contract factory to use as the implementation.
-* `opts` - an object with options:
-** additional options as described in <<common-options>>.
+* `Contract` - 一个 ethers contract factory 用作 implementation。
+* `opts` - 具有选项的对象：
+** <<common-options>> 中描述的其他选项。
 
-*Returns:*
+*返回值：*
 
-* the beacon contract instance.
+* beacon contract 实例。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@1.13.0`
 
@@ -188,20 +188,16 @@ async function upgradeBeacon(
 ): Promise<ethers.Contract>
 ----
 
-Upgrades an https://docs.openzeppelin.com/contracts/api/proxy#UpgradeableBeacon[upgradable beacon] at a specified address to a new implementation contract, and returns the beacon contract instance.
+将指定地址的 https://docs.openzeppelin.com/contracts/api/proxy#UpgradeableBeacon[upgradable beacon] 升级到新的 implementation contract，并返回 beacon contract 实例。
 
-*Parameters:*
+*参数：*
 
-* `beacon` - the beacon address or beacon contract instance.
-* `Contract` - an ethers contract factory to use as the new implementation.
-* `opts` - an object with options:
-** additional options as described in <<common-options>>.
+* `beacon` - beacon 地址或 beacon contract 实例。
+* `Contract` - 一个 ethers contract factory 用作新的 implementation。
+* `opts` - 具有选项的对象：
+** <<common-options>> 中描述的其他选项。
 
-*Returns:*
-
-* the beacon contract instance.
-
-*Since*:
+*始于*：
 
 * `@openzeppelin/hardhat-upgrades@1.13.0`
 
@@ -224,22 +220,22 @@ async function deployBeaconProxy(
 ): Promise<ethers.Contract>
 ----
 
-Creates a https://docs.openzeppelin.com/contracts/api/proxy#BeaconProxy[Beacon proxy] given an existing beacon contract address and an ethers contract factory corresponding to the beacon's current implementation contract, and returns a contract instance with the beacon proxy address and the implementation interface. If `args` is set, will call an initializer function `initialize` with the supplied args during proxy deployment.
+给定一个现有的 beacon contract 地址和一个与 beacon 当前 implementation contract 对应的 ethers contract factory，创建一个 https://docs.openzeppelin.com/contracts/api/proxy#BeaconProxy[Beacon proxy]，并返回一个具有 beacon proxy 地址和 implementation 接口的 contract 实例。如果设置了 `args`，将在代理部署期间使用提供的 args 调用 initializer 函数 `initialize`。
 
-*Parameters:*
+*参数：*
 
-* `beacon` - the beacon address or beacon contract instance.
-* `attachTo` - an ethers contract factory corresponding to the beacon's current implementation contract.
-* `args` - arguments for the initializer function.
-* `opts` - an object with options:
-** `initializer`: set a different initializer function to call (see https://docs.ethers.io/v5/api/utils/abi/interface/#Interface--specifying-fragments[Specifying Fragments]), or specify `false` to disable initialization.
-** additional options as described in <<common-options>>.
+* `beacon` - beacon 地址或 beacon contract 实例。
+* `attachTo` - 与 beacon 当前 implementation contract 对应的 ethers contract factory。
+* `args` - initializer 函数的参数。
+* `opts` - 具有选项的对象：
+** `initializer`: 设置要调用的其他 initializer 函数（请参阅 https://docs.ethers.io/v5/api/utils/abi/interface/#Interface--specifying-fragments[指定片段]），或者指定 `false` 以禁用初始化。
+** <<common-options>> 中描述的其他选项。
 
-*Returns:*
+*返回值：*
 
-* a contract instance with the beacon proxy address and the implementation interface.
+* 一个具有 beacon proxy 地址和 implementation 接口的 contract 实例。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@1.13.0`
 
@@ -257,24 +253,24 @@ async function forceImport(
 ): Promise<ethers.Contract>
 ----
 
-Forces the import of an existing proxy, beacon, or implementation contract deployment to be used with this plugin. Provide the address of an existing proxy, beacon or implementation, along with the ethers contract factory of the implementation contract that was deployed.
+强制导入现有的代理、信标或 implementation contract 部署，以便与此插件一起使用。提供现有代理、信标或 implementation 的地址，以及已部署的 implementation contract 的 ethers contract factory。
 
-CAUTION: When importing a proxy or beacon, the `deployedImpl` argument must be the contract factory of the *current* implementation contract version that is being used, not the version that you are planning to upgrade to.
+注意：导入代理或 beacon 时，`deployedImpl` 参数必须是正在使用的*当前* implementation contract 版本的 contract factory，而不是计划升级到的版本。
 
-Use this function to recreate a lost https://docs.openzeppelin.com/upgrades-plugins/network-files[network file] by importing previous deployments, or to register proxies or beacons for upgrading even if they were not originally deployed by this plugin. Supported for UUPS, Transparent, and Beacon proxies, as well as beacons and implementation contracts.
+使用此函数通过导入先前的部署来重新创建丢失的 https://docs.openzeppelin.com/upgrades-plugins/network-files[网络文件]，或者注册代理或 beacon 以进行升级，即使它们最初不是由此插件部署的。支持 UUPS、Transparent 和 Beacon proxies，以及 beacons 和 implementation contracts。
 
-*Parameters:*
+*参数：*
 
-* `address` - the address of an existing proxy, beacon or implementation.
-* `deployedImpl` - the ethers contract factory of the implementation contract that was deployed.
-* `opts` - an object with options:
-** `kind`: (`"uups" | "transparent" | "beacon"`) forces a proxy to be treated as a UUPS, Transparent, or Beacon proxy. If not provided, the proxy kind will be automatically detected.
+* `address` - 现有代理、beacon 或 implementation 的地址。
+* `deployedImpl` - 已部署的 implementation contract 的 ethers contract factory。
+* `opts` - 具有选项的对象：
+** `kind`: (`"uups" | "transparent" | "beacon"`) 强制将代理视为 UUPS、Transparent 或 Beacon proxy。如果未提供，将自动检测代理类型。
 
-*Returns:*
+*返回值：*
 
-* a contract instance representing the imported proxy, beacon or implementation.
+* 表示导入的代理、信标或 implementation 的 contract 实例。
 
-*Since*
+*始于*
 
 * `@openzeppelin/hardhat-upgrades@1.15.0`
 
@@ -292,15 +288,15 @@ async function validateImplementation(
 ): Promise<void>
 ----
 
-Validates an implementation contract without deploying it.
+验证 implementation contract，而不部署它。
 
-*Parameters:*
+*参数：*
 
-* `Contract` - the ethers contract factory of the implementation contract.
-* `opts` - an object with options:
-** additional options as described in <<common-options>>.
+* `Contract` - implementation contract 的 ethers contract factory。
+* `opts` - 具有选项的对象：
+** <<common-options>> 中描述的其他选项。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@1.20.0`
 
@@ -325,20 +321,20 @@ async function deployImplementation(
 ): Promise<string | ethers.providers.TransactionResponse>
 ----
 
-Validates and deploys an implementation contract, and returns its address.
+验证并部署 implementation contract，并返回其地址。
 
-*Parameters:*
+*参数：*
 
-* `Contract` - an ethers contract factory to use as the implementation.
-* `opts` - an object with options:
-** `getTxResponse`: if set to `true`, causes this function to return an ethers transaction response corresponding to the deployment of the new implementation contract instead of its address. Note that if the new implementation contract was originally imported as a result of `forceImport`, only the address will be returned.
-** additional options as described in <<common-options>>.
+* `Contract` - 一个 ethers contract factory 用作 implementation。
+* `opts` - 具有选项的对象：
+** `getTxResponse`: 如果设置为 `true`，则此函数会返回与新 implementation contract 的部署相对应的 ethers 交易响应，而不是其地址。请注意，如果新的 implementation contract 最初是由于 `forceImport` 导入的，则只会返回地址。
+** <<common-options>> 中描述的其他选项。
 
-*Returns:*
+*返回值：*
 
-* the address or an ethers transaction response corresponding to the deployment of the implementation contract.
+* 对应其部署的地址，或 implementation contract 的 Ethers 交易响应
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@1.20.0`
 
@@ -359,22 +355,22 @@ async function validateUpgrade(
 ): Promise<void>
 ----
 
-Validates a new implementation contract without deploying it and without actually upgrading to it. Compares the current implementation contract to the new implementation contract to check for storage layout compatibility errors. If `referenceAddressOrContract` is the current implementation address, the `kind` option is required.
+验证新的 implementation contract，而不部署它，也不实际升级到它。将当前 implementation contract 与新的 implementation contract 进行比较，以检查存储布局兼容性错误。如果 `referenceAddressOrContract` 是当前 implementation 地址，则需要 `kind` 选项。
 
-*Parameters:*
+*参数：*
 
-* `referenceAddressOrContract` - a proxy or beacon address that uses the current implementation, or an address or ethers contract factory corresponding to the current implementation.
-* `newContract` - the new implementation contract.
-* `opts` - an object with options:
-** additional options as described in <<common-options>>.
+* `referenceAddressOrContract` - 使用当前 implementation 的代理或 beacon 地址，或与当前 implementation 对应的地址或 ethers contract factory。
+* `newContract` - 新的 implementation contract。
+* `opts` - 具有选项的对象：
+** <<common-options>> 中描述的其他选项。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@1.20.0`
 
-*Examples:*
+*示例：*
 
-Validate upgrading an existing proxy to a new contract (replace `PROXY_ADDRESS` with the address of your proxy):
+验证将现有代理升级到新 contract（将 `PROXY_ADDRESS` 替换为您的代理的地址）：
 [source,ts]
 ----
 const { ethers, upgrades } = require('hardhat');
@@ -383,7 +379,7 @@ const BoxV2 = await ethers.getContractFactory('BoxV2');
 await upgrades.validateUpgrade(PROXY_ADDRESS, BoxV2);
 ----
 
-Validate upgrading between two contract implementations:
+验证在两个 contract implementations 之间升级：
 [source,ts]
 ----
 const { ethers, upgrades } = require('hardhat');
@@ -417,19 +413,19 @@ async function prepareUpgrade(
 ): Promise<string | ethers.providers.TransactionResponse>
 ----
 
-Validates and deploys a new implementation contract, and returns its address. If `referenceAddressOrContract` is the current implementation address, the `kind` option is required. Use this method to prepare an upgrade to be run from an admin address you do not control directly or cannot use from Hardhat.
+验证并部署新的 implementation contract，并返回其地址。如果 `referenceAddressOrContract` 是当前 implementation 地址，则需要 `kind` 选项。使用此方法准备从您不直接控制或无法从 Hardhat 使用的管理地址运行的升级。
 
-*Parameters:*
+*参数：*
 
-* `referenceAddressOrContract` - the proxy or beacon or implementation address or contract instance.
-* `Contract` - the new implementation contract.
-* `opts` - an object with options:
-** `getTxResponse`: if set to `true`, causes this function to return an ethers transaction response corresponding to the deployment of the new implementation contract instead of its address. Note that if the new implementation contract was originally imported as a result of `forceImport`, only the address will be returned.
-** additional options as described in <<common-options>>.
+* `referenceAddressOrContract` - 代理、beacon 或 implementation 地址或 contract 实例。
+* `Contract` - 新的 implementation contract。
+* `opts` - 具有选项的对象：
+** `getTxResponse`: 如果设置为 `true`，则此函数会返回与新 implementation contract 的部署相对应的 ethers 交易响应，而不是其地址。请注意，如果新的 implementation contract 最初是由于 `forceImport` 导入的，则只会返回地址。
+** <<common-options>> 中描述的其他选项。
 
-*Returns:*
+*返回值：*
 
-* the address or an ethers transaction response corresponding to the deployment of the new implementation contract.
+* 对应其部署的地址，或 implementation contract 的 Ethers 交易响应
 
 [[defender-deploy-contract]]
 == defender.deployContract
@@ -446,22 +442,22 @@ async function deployContract(
 ): Promise<ethers.Contract>
 ----
 
-Deploys a non-upgradeable contract using OpenZeppelin Defender, and returns a contract instance. Throws an error if the contract looks like an implementation contract.
+使用 OpenZeppelin Defender 部署不可升级的 contract，并返回 contract 实例。如果 contract 看起来像 implementation contract，则会引发错误。
 
-CAUTION: Do not use this function to deploy implementations of upgradeable contracts, because upgrade safety validations are not performed with this function. For implementation contracts, use <<deploy-implementation>> instead.
+注意：不要使用此函数来部署可升级 contracts 的 implementations，因为此函数不执行升级安全验证。对于 implementation contracts，请改用 <<deploy-implementation>>。
 
-*Parameters:*
+*参数：*
 
-* `Contract` - an ethers contract factory to use as the contract to deploy.
-* `opts` - an object with options:
-** `unsafeAllowDeployContract`: if set to `true`, allows the contract to be deployed even if it looks like an implementation contract. Defaults to `false`.
-** `pollingInterval`: polling interval in milliseconds between checks for the transaction confirmation when calling `.waitForDeployment()` on the resulting contract instance. Defaults to `5000`.
+* `Contract` - 一个 ethers contract factory 用作要部署的 contract。
+* `opts` - 具有选项的对象：
+** `unsafeAllowDeployContract`: 如果设置为 `true`，即使 contract 看起来像 implementation contract，也允许部署 contract。默认为 `false`。
+** `pollingInterval`: 在对结果 contract 实例调用 `.waitForDeployment()` 时，检查交易确认的轮询间隔（以毫秒为单位）。默认为 `5000`。
 
-*Returns:*
+*返回值：*
 
-* the contract instance.
+* contract 实例。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@2.2.0`
 
@@ -478,13 +474,13 @@ async function getDeployApprovalProcess(
   }>
 ----
 
-Gets the default deploy approval process configured for your deployment environment on OpenZeppelin Defender.
+获取在 OpenZeppelin Defender 上为您的部署环境配置的默认部署审批流程。
 
-*Returns:*
+*返回值：*
 
-* an object with the default deploy approval process ID and the associated address, such as a Relayer, EOA, or multisig wallet address.
+* 包含默认部署审批流程 ID 和关联地址的对象，例如中继器、EOA 或多重签名钱包地址。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@2.5.0`
 
@@ -501,13 +497,13 @@ async function getUpgradeApprovalProcess(
   }>
 ----
 
-Gets the default upgrade approval process configured for your deployment environment on OpenZeppelin Defender. For example, this is useful for determining the default multisig wallet that you can use in your scripts to assign as the owner of your proxy.
+获取在 OpenZeppelin Defender 上为您的部署环境配置的默认升级审批流程。例如，这对于确定可以在脚本中用作代理所有者的默认多重签名钱包非常有用。
 
-*Returns:*
+*返回值：*
 
-* an object with the default upgrade approval process ID and the associated address, such as a multisig or governor contract address.
+* 包含默认升级审批流程 ID 和关联地址的对象，例如多重签名或 Governor contract 地址。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@2.5.0`
 
@@ -538,23 +534,23 @@ async function proposeUpgradeWithApproval(
   }>
 ----
 
-Proposes an upgrade using an upgrade approval process on OpenZeppelin Defender.
+使用 OpenZeppelin Defender 上的升级审批流程提议升级。
 
-Similar to `prepareUpgrade`. This method validates and deploys the new implementation contract, but also proposes an upgrade using an upgrade approval process on OpenZeppelin Defender. Supported for UUPS or Transparent proxies. Not currently supported for beacon proxies or beacons. For beacons, use `prepareUpgrade` along with a transaction proposal on Defender to upgrade the beacon to the deployed implementation.
+类似于 `prepareUpgrade`。此方法验证并部署新的 implementation contract，但也使用 OpenZeppelin Defender 上的升级审批流程提议升级。支持 UUPS 或 Transparent proxies。当前不支持 beacon proxies 或 beacons。对于 beacons，请将 `prepareUpgrade` 和 Defender 上的交易提议一起使用，以将 beacon 升级到已部署的 implementation。
 
-*Parameters:*
+*参数：*
 
-* `proxyAddress` - the proxy address.
-* `ImplFactory` - the new implementation contract.
-* `opts` - an object with options:
-** `approvalProcessId`: The ID of the upgrade approval process. Defaults to the upgrade approval process configured for your deployment environment on Defender.
-** additional options as described in <<common-options>>.
+* `proxyAddress` - 代理地址。
+* `ImplFactory` - 新的 implementation contract。
+* `opts` - 具有选项的对象：
+** `approvalProcessId`: 升级审批流程的 ID。默认为在 Defender 上为您的部署环境配置的升级审批流程。
+** <<common-options>> 中描述的其他选项。
 
-*Returns:*
+*返回值：*
 
-* an object with the Defender proposal ID, the URL of the proposal in Safe App if applicable, and the ethers transaction response corresponding to the deployment of the new implementation contract. Note that if the new implementation contract was originally imported as a result of `forceImport`, the ethers transaction response will be undefined.
+* 包含 Defender 提议 ID、Safe App 中提议的 URL（如果适用）以及与新 implementation contract 部署对应的 ethers 交易响应的对象。请注意，如果新的 implementation contract 最初是由于 `forceImport` 导入的，则 ethers 交易响应将是不确定的。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@2.2.0`
 
@@ -573,17 +569,17 @@ async function changeProxyAdmin(
 ): Promise<void>
 ----
 
-Changes the admin for a specific proxy.
+更改特定代理的管理员。
 
-NOTE: This function is not supported with admins or proxies from OpenZeppelin Contracts 5.x.
+注意：OpenZeppelin Contracts 5.x 不支持此功能用于管理员或代理。
 
-*Parameters:*
+*参数：*
 
-* `proxyAddress` - the address of the proxy to change.
-* `newAdmin` - the new admin address.
-* `signer` - the signer to use for the transaction.
-* `opts` - an object with options:
-** additional options as described in <<common-options>>.
+* `proxyAddress` - 要更改的代理的地址。
+* `newAdmin` - 新的管理员地址。
+* `signer` - 用于交易的签名者。
+* `opts` - 具有选项的对象：
+** <<common-options>> 中描述的其他选项。
 
 [[admin-transfer-proxy-admin-ownership]]
 == admin.transferProxyAdminOwnership
@@ -601,20 +597,20 @@ async function transferProxyAdminOwnership(
 ): Promise<void>
 ----
 
-Changes the owner of the proxy admin contract for a specific proxy.
+更改特定代理的代理管理合约的所有者。
 
-NOTE: The `proxyAddress` parameter is required since `@openzeppelin/hardhat-upgrades@3.0.0`
+注意：自`@openzeppelin/hardhat-upgrades@3.0.0`起，`proxyAddress` 参数是必需的
 
-*Parameters:*
+*参数：*
 
-* `proxyAddress` - the address of the proxy whose admin ownership is to be transferred.
-* `newOwner` - the new owner address for the proxy admin contract.
-* `signer` - the signer to use for the transaction.
-* `opts` - an object with options:
-** `silent`: if set to `true`, silences console logging about each proxy affected by the admin ownership transfer.
-** additional options as described in <<common-options>>.
+* `proxyAddress` - 其管理所有权将被转移的代理的地址。
+* `newOwner` - 代理管理合约的新所有者地址。
+* `signer` - 用于交易的签名者。
+* `opts` - 具有选项的对象：
+** `silent`: 如果设置为 `true`，则会静默有关受管理所有权转移影响的每个代理的控制台日志记录。
+** <<common-options>> 中描述的其他选项。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@3.0.0`
 
@@ -628,15 +624,15 @@ async function erc1967.getBeaconAddress(proxyAddress: string): Promise<string>;
 async function erc1967.getAdminAddress(proxyAddress: string): Promise<string>;
 ----
 
-Functions in this module provide access to the https://eips.ethereum.org/EIPS/eip-1967[ERC1967] variables of a proxy contract.
+此模块中的函数提供对代理合约的 https://eips.ethereum.org/EIPS/eip-1967[ERC1967] 变量的访问。
 
-*Parameters:*
+*参数：*
 
-* `proxyAddress` - the proxy address.
+* `proxyAddress` - 代理地址。
 
-*Returns:*
+*返回值：*
 
-* the implementation, beacon, or admin address depending on the function called.
+* 根据调用的函数，返回 implementation、beacon 或管理地址。
 
 [[beacon]]
 == beacon
@@ -646,17 +642,17 @@ Functions in this module provide access to the https://eips.ethereum.org/EIPS/ei
 async function beacon.getImplementationAddress(beaconAddress: string): Promise<string>;
 ----
 
-This module provides a convenience function to get the implementation address from a beacon contract.
+此模块提供了一个便捷函数，用于从 beacon contract 获取 implementation 地址。
 
-*Parameters:*
+*参数：*
 
-* `beaconAddress` - the beacon address.
+* `beaconAddress` - beacon 地址。
 
-*Returns:*
+*返回值：*
 
-* the implementation address.
+* implementation 地址。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@1.13.0`
 
@@ -667,56 +663,56 @@ This module provides a convenience function to get the implementation address fr
 function silenceWarnings()
 ----
 
-NOTE: This function is useful for tests, but its use in production deployment scripts is discouraged.
+注意：此函数对于测试非常有用，但不建议在生产部署脚本中使用。
 
-Silences all subsequent warnings about the use of unsafe flags. Prints a last warning before doing so.
+静默所有后续有关使用不安全标志的警告。在执行此操作之前，会打印最后一个警告。
 
 [[verify]]
 == verify
 
-Extends https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify[hardhat-verify]'s `verify` task to completely verify a proxy on Etherscan.  This supports verifying proxy contracts that were deployed by the Hardhat Upgrades plugin.
+扩展 https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify[hardhat-verify] 的 `verify` 任务以在 Etherscan 上完全验证代理。这支持验证由 Hardhat Upgrades 插件部署的代理 contracts。
 
-The arguments are the same as for hardhat-verify's `verify` task.  If the provided address is a proxy, this task will verify the proxy's implementation contract, the proxy itself and any proxy-related contracts, as well as link the proxy to the implementation contract's ABI on Etherscan.  If the provided address is not a proxy, the regular `verify` task from hardhat-verify will be run on the address instead.
+参数与 hardhat-verify 的 `verify` 任务相同。如果提供的地址是代理，则此任务将验证代理的 implementation contract、代理本身以及任何与代理相关的 contracts，并在 Etherscan 上将代理链接到 implementation contract 的 ABI。如果提供的地址不是代理，则将改为在该地址上运行 hardhat-verify 中的常规 `verify` 任务。
 
-The following contracts will be verified when you run this task on your proxy address:
+当您在代理地址上运行此任务时，将验证以下 contracts：
 
-* Your implementation contract
-* https://docs.openzeppelin.com/contracts/api/proxy#ERC1967Proxy[ERC1967Proxy] or https://docs.openzeppelin.com/contracts/api/proxy#TransparentUpgradeableProxy[TransparentUpgradeableProxy] or https://docs.openzeppelin.com/contracts/api/proxy#BeaconProxy[BeaconProxy] (for UUPS, transparent, or beacon proxies, respectively)
-* https://docs.openzeppelin.com/contracts/api/proxy#ProxyAdmin[ProxyAdmin] (with transparent proxies)
-* https://docs.openzeppelin.com/contracts/api/proxy#UpgradeableBeacon[UpgradeableBeacon] (with beacon proxies)
+* 你的 implementation contract
+* https://docs.openzeppelin.com/contracts/api/proxy#ERC1967Proxy[ERC1967Proxy] 或 https://docs.openzeppelin.com/contracts/api/proxy#TransparentUpgradeableProxy[TransparentUpgradeableProxy] 或 https://docs.openzeppelin.com/contracts/api/proxy#BeaconProxy[BeaconProxy]（分别适用于 UUPS、transparent 或 beacon proxies）
+* https://docs.openzeppelin.com/contracts/api/proxy#ProxyAdmin[ProxyAdmin]（适用于 transparent proxies）
+* https://docs.openzeppelin.com/contracts/api/proxy#UpgradeableBeacon[UpgradeableBeacon]（适用于 beacon proxies）
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/hardhat-upgrades@2.0.0`
 
-*Usage:*
+*用法：*
 
-To use this task, ensure you have hardhat-verify installed:
+要使用此任务，请确保已安装 hardhat-verify：
 [source,sh]
 ----
 npm install --save-dev @nomicfoundation/hardhat-verify
 ----
 
-Then import the `@nomicfoundation/hardhat-verify` plugin along with the `@openzeppelin/hardhat-upgrades` plugin in your Hardhat configuration.
-For example, if you are using JavaScript, import the plugins in `hardhat.config.js`:
+然后，在您的 Hardhat 配置中导入 `@nomicfoundation/hardhat-verify` 插件以及 `@openzeppelin/hardhat-upgrades` 插件。
+例如，如果您使用的是 JavaScript，请在 `hardhat.config.js` 中导入插件：
 [source,js]
 ----
 require("@nomicfoundation/hardhat-verify");
 require("@openzeppelin/hardhat-upgrades");
 ----
-Or if you are using TypeScript, import the plugins in `hardhat.config.ts`:
+或者，如果您使用的是 TypeScript，请在 `hardhat.config.ts` 中导入插件：
 [source,ts]
 ----
 import "@nomicfoundation/hardhat-verify";
 import "@openzeppelin/hardhat-upgrades";
 ----
 
-Finally, follow https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#usage[hardhat-verify's usage documentation] to configure your Etherscan API key and run the `verify` task from the command line with the proxy address:
+最后，按照 https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#usage[hardhat-verify 的用法文档]配置您的 Etherscan API 密钥，并从命令行使用代理地址运行 `verify` 任务：
 [source]
 ----
 npx hardhat verify --network mainnet PROXY_ADDRESS
 ----
-or programmatically using the https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#using-programmatically[`verify:verify` subtask]:
+或使用 https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#using-programmatically[`verify:verify` 子任务]以编程方式运行：
 [javascript]
 ----
 await hre.run("verify:verify", {
@@ -724,4 +720,4 @@ await hre.run("verify:verify", {
 });
 ----
 
-Note that you do not need to include constructor arguments when verifying if your implementation contract only uses initializers.  However, if your implementation contract has an actual constructor with arguments (such as to set immutable variables), then include constructor arguments according to the usage information for the https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#usage[task] or https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#using-programmatically[subtask].
+请注意，如果您的 implementation contract 仅使用 initializers，则无需在验证时包含构造函数参数。但是，如果您的 implementation contract 具有带有参数的实际构造函数（例如，为了设置 immutable 变量），则根据 https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#usage[task] 或 https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#using-programmatically[subtask] 的用法信息包括构造函数参数。

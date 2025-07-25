@@ -1,1 +1,394 @@
-include::foundry/pages/foundry-upgrades.adoc[]
+:page-title: 使用 Foundry 进行合约升级
+
+本指南将向您展示如何使用 Foundry 来管理 {oz} Contracts 的升级。
+
+您将学习到的内容：
+
+* 使用 {oz} Upgrades 插件和库升级合约。
+* 使用 Foundry 测试升级。
+* 将升级部署到测试网。
+
+本指南假定您熟悉 Foundry。如果您不熟悉 Foundry，请查看 link:https://book.getfoundry.sh/[Foundry Book]。
+
+== 设置
+
+本指南需要安装 Foundry。您可以通过运行以下命令来安装 Foundry：
+
+```sh
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
+
+接下来，您需要创建一个新的 Foundry 项目：
+
+```sh
+forge init --template https://github.com/OpenZeppelin/openzeppelin-foundry-template oz-foundry-upgrades
+cd oz-foundry-upgrades
+```
+
+此命令将使用 {oz} Foundry 模板创建一个新的 Foundry 项目。该模板包含 {oz} Upgrades 插件和库。
+
+现在，安装 Foundry 项目的依赖项：
+
+```sh
+forge install
+```
+
+== 定义合约
+
+首先，您将定义您的合约。为简单起见，您将定义一个只有一个变量 `value` 的简单合约。
+
+创建一个名为 `contracts/Box.sol` 的新文件，内容如下：
+
+[source,solidity]
+----
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract Box {
+    uint256 private value;
+
+    function store(uint256 newValue) public {
+        value = newValue;
+    }
+
+    function retrieve() public view returns (uint256) {
+        return value;
+    }
+}
+----
+
+这是合约的初始版本。稍后您将修改此合约以添加新功能。
+
+== 部署合约
+
+现在您将部署您的合约。您将使用 {oz} Upgrades 插件来部署您的合约。该插件提供了一个方便的函数来部署您的合约并对其进行代理。
+
+创建一个名为 `script/Deploy.s.sol` 的新文件，内容如下：
+
+[source,solidity]
+----
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.20;
+
+import "forge-std/Script.sol";
+import {Box} from "../src/Box.sol";
+import {console} from "forge-std/console.sol";
+import { upgrades } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+import {Deployments} from "../src/Deployments.sol";
+
+contract Deploy is Script {
+    function setUp() public {}
+
+    function run() public {
+        // 获取部署者的私钥
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+
+        // 使用私钥启动广播
+        vm.startBroadcast(deployerPrivateKey);
+
+        // 部署 Box 合约
+        Box box = new Box();
+
+        // 停止广播
+        vm.stopBroadcast();
+
+        // 输出部署地址
+        console.log("Box deployed to:", address(box));
+    }
+}
+----
+
+此脚本将部署 `Box` 合约。
+
+要运行此脚本，您需要设置 `PRIVATE_KEY` 环境变量。您可以使用 Foundry 来生成一个帐户，然后将该帐户的私钥设置为环境变量。
+
+```sh
+forge account create deployer
+export PRIVATE_KEY=<deployer 私钥>
+forge script script/Deploy.s.sol --broadcast --rpc-url $ETH_RPC_URL
+```
+
+该脚本将部署 `Box` 合约并输出合约的地址。
+
+== 使用插件部署合约
+
+现在您将使用 {oz} Upgrades 插件来部署您的合约。使用该插件，您可以部署一个代理合约，该合约将您的合约的逻辑分离到一个单独的合约中。这允许您稍后升级合约的逻辑，而无需更改代理合约的地址。
+
+首先，修改您的部署脚本以使用 {oz} Upgrades 插件。
+
+```diff
+--- a/script/Deploy.s.sol
++++ b/script/Deploy.s.sol
+@@ -4,7 +4,7 @@
+ import {Box} from "../src/Box.sol";
+ import {console} from "forge-std/console.sol";
+ import { upgrades } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+-
++import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
+ import {Deployments} from "../src/Deployments.sol";
+ 
+ contract Deploy is Script {
+@@ -17,13 +17,13 @@
+         vm.startBroadcast(deployerPrivateKey);
+ 
+         // 部署 Box 合约
+-        Box box = new Box();
++        Box box = Box.deploy();
+ 
+         // 停止广播
+         vm.stopBroadcast();
+ 
+         // 输出部署地址
+-        console.log("Box deployed to:", address(box));
++        console.log("Box deployed to:", address(Box.getAddress()));
+     }
+ }
+```
+
+您还需要添加一个 `constructor` 函数到 `Box` 合约中，这样 {oz} Upgrades 插件才能正常工作。
+
+```diff
+--- a/src/Box.sol
++++ b/src/Box.sol
+@@ -7,6 +7,10 @@
+ contract Box {
+     uint256 private value;
+ 
++    constructor() {
++         _disableInitializers();
++    }
++
+     function store(uint256 newValue) public {
+         value = newValue;
+     }
+```
+
+您还需要创建一个 `Box` 部署库。这将包含部署 `Box` 合约的逻辑。创建一个名为 `src/BoxDeployment.s.sol` 的新文件，内容如下：
+
+[source, solidity]
+----
+pragma solidity ^0.8.20;
+
+import {Script} from "forge-std/Script.sol";
+import {console} from "forge-std/console.sol";
+import {Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Box} from "./Box.sol";
+
+library BoxDeployment {
+    function deploy() internal returns (Box) {
+        console.log("Deploying Box...");
+        Box box = Upgrades.deployProxy(new Box(), "initialize", abi.encode(uint256(42)));
+        console.log("Box deployed to:", address(box));
+        return box;
+    }
+
+    function getAddress() internal view returns (address) {
+        return Upgrades.getProxyAddress();
+    }
+}
+----
+
+此库使用 `Upgrades.deployProxy` 函数来部署 `Box` 合约。`deployProxy` 函数将部署一个代理合约，该合约将 `Box` 合约的逻辑委托给它。
+`deployProxy` 函数还将调用 `initialize` 函数，该函数用于初始化合约的状态。
+
+`Upgrades.deployProxy` 的第二个参数是 `initialize` 函数的选择器。在本例中，您将使用 `abi.encode(uint256(42))` 作为 `initialize` 函数的参数。这意味着 `initialize` 函数将使用 `42` 作为参数调用。
+
+您需要修改 `Box` 合约以包含 `initialize` 函数:
+
+```diff
+--- a/src/Box.sol
++++ b/src/Box.sol
+@@ -11,6 +11,10 @@
+          _disableInitializers();
+     }
+ 
++    function initialize(uint256 initialValue) public initializer {
++        value = initialValue;
++    }
++
+     function store(uint256 newValue) public {
+         value = newValue;
+     }
+```
+
+现在，您可以像之前一样运行部署脚本：
+
+```sh
+forge script script/Deploy.s.sol --broadcast --rpc-url $ETH_RPC_URL
+```
+
+该脚本将部署 `Box` 合约并输出代理合约的地址。
+
+== 升级合约
+
+现在您已经部署了您的合约，您可以升级它。假设您想向您的合约添加一个新函数，该函数会递增存储的值。
+
+首先，创建一个名为 `contracts/BoxV2.sol` 的新文件，内容如下：
+
+[source,solidity]
+----
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+contract BoxV2 is Initializable {
+    uint256 private value;
+
+    function initialize(uint256 initialValue) public initializer {
+        value = initialValue;
+    }
+
+    function store(uint256 newValue) public {
+        value = newValue;
+    }
+
+    function retrieve() public view returns (uint256) {
+        return value;
+    }
+
+    function increment() public {
+        value = value + 1;
+    }
+}
+----
+
+该合约与 `Box` 合约类似，但它还包含一个 `increment` 函数。请注意，您需要从 {oz} Contracts 导入 `Initializable` 合约，并使用 `initializer` 修饰符修饰 `initialize` 函数。
+
+接下来，您需要修改您的部署脚本以升级到 `BoxV2` 合约。
+
+```diff
+--- a/script/Deploy.s.sol
++++ b/script/Deploy.s.sol
+@@ -5,6 +5,7 @@
+ import {console} from "forge-std/console.sol";
+ import { upgrades } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+ import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
++import { BoxV2 } from "../src/BoxV2.sol";
+ import {Deployments} from "../src/Deployments.sol";
+ 
+ contract Deploy is Script {
+@@ -16,10 +17,11 @@
+         // 使用私钥启动广播
+         vm.startBroadcast(deployerPrivateKey);
+ 
+-        // 部署 Box 合约
+-        Box box = Box.deploy();
++        // 部署或升级 Box 合约
++        BoxV2 box = BoxV2.deploy();
+ 
++        console.log("Box deployed to:", address(BoxV2.getAddress()));
+         // 停止广播
+         vm.stopBroadcast();
+ 
+```
+
+您还需要创建 `BoxV2` 部署库。这将包含升级到 `BoxV2` 合约的逻辑。创建一个名为 `src/BoxV2Deployment.s.sol` 的新文件，内容如下：
+
+[source, solidity]
+----
+pragma solidity ^0.8.20;
+
+import {Script} from "forge-std/Script.sol";
+import {console} from "forge-std/console.sol";
+import {Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {BoxV2} from "./BoxV2.sol";
+
+library BoxV2Deployment {
+    function deploy() internal returns (BoxV2) {
+        address proxyAddress = Upgrades.getProxyAddress();
+        BoxV2 boxV2 = new BoxV2(proxyAddress);
+        if (proxyAddress == address(0)) {
+          console.log("Deploying BoxV2...");
+          boxV2 = Upgrades.deployProxy(new BoxV2(), "initialize", abi.encode(uint256(42)));
+        } else {
+          console.log("Upgrading Box to BoxV2...");
+          boxV2 = Upgrades.upgradeProxy(new BoxV2(), proxyAddress);
+        }
+        console.log("BoxV2 deployed to:", address(boxV2));
+        return boxV2;
+    }
+
+    function getAddress() internal view returns (address) {
+        return Upgrades.getProxyAddress();
+    }
+}
+----
+
+此库使用 `Upgrades.upgradeProxy` 函数将代理合约升级到 `BoxV2` 合约。`upgradeProxy` 函数将把代理合约指向的新逻辑合约的地址更改为 `BoxV2` 合约的地址。
+
+现在，您可以像之前一样运行部署脚本：
+
+```sh
+forge script script/Deploy.s.sol --broadcast --rpc-url $ETH_RPC_URL
+```
+
+该脚本将升级到 `BoxV2` 合约并输出代理合约的地址。请注意，代理合约的地址与之前的地址相同。
+
+== 测试升级
+
+现在您已经升级了您的合约，您需要测试它以确保它按预期工作。
+
+创建一个名为 `test/Box.t.sol` 的新文件，内容如下：
+
+[source,solidity]
+----
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.20;
+
+import "forge-std/Test.sol";
+import {Box} from "../src/Box.sol";
+import {BoxV2} from "../src/BoxV2.sol";
+import {console} from "forge-std/console.sol";
+
+contract BoxTest is Test {
+    Box public box;
+    BoxV2 public boxV2;
+
+    function setUp() public {
+        // 部署 Box 合约
+        box = new Box(address(0));
+        boxV2 = new BoxV2(address(0));
+    }
+
+    function test_retrieve() public {
+        // 存储一个值
+        box.store(42);
+
+        // 检查该值是否被检索到
+        assertEq(box.retrieve(), 42, "value not equal to 42");
+    }
+
+    function test_increment() public {
+        // 将 Box 合约转换为 BoxV2 合约
+        boxV2 = BoxV2(address(box));
+
+        // 存储一个值
+        box.store(42);
+
+        // 递增该值
+        boxV2.increment();
+
+        // 检查该值是否已递增
+        assertEq(box.retrieve(), 43, "value not equal to 43");
+    }
+}
+----
+
+此测试用例测试 `retrieve` 和 `increment` 函数是否按预期工作。
+
+要运行测试用例，请运行以下命令：
+
+```sh
+forge test
+```
+
+测试用例应该通过。
+
+== 进一步阅读
+
+* link:https://docs.openzeppelin.com/contracts/5.x/upgradeable[升级合约]
+* link:https://docs.openzeppelin.com/upgrades/sdk/[Upgrades 插件]
+* link:https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades[openzeppelin-foundry-upgrades]

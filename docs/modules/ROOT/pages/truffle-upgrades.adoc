@@ -1,30 +1,30 @@
-= Using with Truffle
+= 与 Truffle 一起使用
 
-WARNING: This package is deprecated. The recommended alternative is to use https://hardhat.org/[Hardhat] along with the xref:hardhat-upgrades.adoc[Hardhat Upgrades] plugin.
+WARNING: 此包已弃用。 推荐的替代方案是使用 https://hardhat.org/[Hardhat] 以及 xref:hardhat-upgrades.adoc[Hardhat Upgrades] 插件。
 
-This package adds functions to your Truffle migrations and tests so you can deploy and upgrade proxies for your contracts.
+此包将函数添加到您的 Truffle 迁移和测试中，以便您可以为您的合约部署和升级代理。
 
-NOTE: Usage from https://www.trufflesuite.com/docs/truffle/getting-started/writing-external-scripts[Truffle external scripts] is not yet supported.
+NOTE: 尚不支持从 https://www.trufflesuite.com/docs/truffle/getting-started/writing-external-scripts[Truffle 外部脚本] 使用。
 
-TIP: Check out the https://forum.openzeppelin.com/t/openzeppelin-truffle-upgrades-step-by-step-tutorial/3579[step by step tutorial], showing from creating, testing and deploying, all the way through to upgrading with Gnosis Safe.
+TIP: 查看 https://forum.openzeppelin.com/t/openzeppelin-truffle-upgrades-step-by-step-tutorial/3579[分步教程]，展示了从创建、测试和部署，一直到使用 Gnosis Safe 进行升级的全过程。
 
 [[install]]
-== Installation
+== 安装
 
 [source,console]
 ----
 $ npm install --save-dev @openzeppelin/truffle-upgrades
 ----
 
-This package requires Truffle https://github.com/trufflesuite/truffle/releases/tag/v5.1.35[version 5.1.35] or greater.
+此包需要 Truffle https://github.com/trufflesuite/truffle/releases/tag/v5.1.35[5.1.35 版本] 或更高版本。
 
 [[migrations-usage]]
-== Usage in migrations
+== 在迁移中使用
 
 [[proxies]]
-=== Proxies
+=== 代理
 
-To deploy an upgradeable instance of one of your contracts in your migrations, use the `deployProxy` function:
+要在迁移中部署合约的可升级实例，请使用 `deployProxy` 函数：
 
 [source,js]
 ----
@@ -39,9 +39,9 @@ module.exports = async function (deployer) {
 };
 ----
 
-This will automatically check that the `Box` contract is upgrade-safe, set up a proxy admin (if needed), deploy an implementation contract for the `Box` contract (unless there is one already from a previous deployment), create a proxy, and initialize it by calling `initialize(42)`.
+这将自动检查 `Box` 合约是否是升级安全的，设置代理管理员（如果需要），为 `Box` 合约部署一个实现合约（除非之前部署已经存在一个），创建一个代理，并通过调用 `initialize(42)` 来初始化它。
 
-Then, in a future migration, you can use the `upgradeProxy` function to upgrade the deployed instance to a new version. The new version can be a different contract (such as `BoxV2`), or you can just modify the existing `Box` contract and recompile it - the plugin will note it changed.
+然后，在未来的迁移中，您可以使用 `upgradeProxy` 函数将已部署的实例升级到新版本。 新版本可以是不同的合约（例如 `BoxV2`），或者您可以只修改现有的 `Box` 合约并重新编译它 - 该插件会注意到它已更改。
 
 [source,js]
 ----
@@ -58,12 +58,12 @@ module.exports = async function (deployer) {
 };
 ----
 
-The plugin will take care of comparing `BoxV2` to the previous one to ensure they are compatible for the upgrade, deploy the new `BoxV2` implementation contract (unless there is one already from a previous deployment), and upgrade the existing proxy to the new implementation.
+该插件将负责比较 `BoxV2` 和之前的版本，以确保它们与升级兼容，部署新的 `BoxV2` 实现合约（除非之前部署已经存在一个），并将现有代理升级到新的实现。
 
 [[beacon-proxies]]
-=== Beacon proxies
+=== 信标代理
 
-You can also use this plugin to deploy an upgradable beacon for your contract with the `deployBeacon` function, then deploy one or more beacon proxies that point to it by using the `deployBeaconProxy` function.
+您还可以使用此插件通过 `deployBeacon` 函数为您的合约部署可升级信标，然后使用 `deployBeaconProxy` 函数部署一个或多个指向它的信标代理。
 
 [source,js]
 ----
@@ -81,7 +81,7 @@ module.exports = async function (deployer) {
 };
 ----
 
-In a future migration, you can use the `erc1967.getBeaconAddress` function to get the beacon address from a deployed beacon proxy instance, then call the `upgradeBeacon` function to upgrade that beacon to a new version. When the beacon is upgraded, all of the beacon proxies that point to it will use the new contract implementation.
+在未来的迁移中，您可以使用 `erc1967.getBeaconAddress` 函数从已部署的信标代理实例获取信标地址，然后调用 `upgradeBeacon` 函数将该信标升级到新版本。 当信标升级后，所有指向它的信标代理都将使用新的合约实现。
 
 [source,js]
 ----
@@ -103,12 +103,12 @@ module.exports = async function (deployer) {
 ----
 
 [[test-usage]]
-== Usage in tests
+== 在测试中使用
 
-You can also use the plugin's functions from your Truffle tests, in case you want to add tests for upgrading your contracts (which you should!). The API is the same as in the migrations, only that without a `deployer` parameter.
+您还可以从您的 Truffle 测试中使用该插件的功能，以防您想为升级您的合约添加测试（您应该这样做！）。 API 与迁移中的 API 相同，只是没有 `deployer` 参数。
 
 [[proxies-tests]]
-=== Proxies
+=== 代理
 
 [source,js]
 ----
@@ -129,7 +129,7 @@ describe('upgrades', () => {
 ----
 
 [[beacon-proxies-tests]]
-=== Beacon proxies
+=== 信标代理
 
 [source,js]
 ----

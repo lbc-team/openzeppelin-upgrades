@@ -1,14 +1,14 @@
-= Using with Foundry
+= 与 Foundry 一起使用
 
-Foundry library for deploying and managing upgradeable contracts, which includes upgrade safety validations.
+用于部署和管理可升级合约的 Foundry 库，其中包括升级安全验证。
 
-== Installation
+== 安装
 
-Follow one of the sections below depending on which version of OpenZeppelin Contracts you are using. OpenZeppelin Contracts v5 is required for new deployments.
+根据您使用的 OpenZeppelin Contracts 版本，按照以下部分之一进行操作。 新部署需要 OpenZeppelin Contracts v5。
 
-=== Using OpenZeppelin Contracts v5
+=== 使用 OpenZeppelin Contracts v5
 
-Run these commands:
+运行以下命令：
 
 [source,console]
 ----
@@ -17,7 +17,7 @@ forge install OpenZeppelin/openzeppelin-foundry-upgrades
 forge install OpenZeppelin/openzeppelin-contracts-upgradeable
 ----
 
-Set the following in `remappings.txt`, replacing any previous definitions of these remappings:
+在 `remappings.txt` 中设置以下内容，替换掉这些重映射之前的任何定义：
 
 [source]
 ----
@@ -25,11 +25,11 @@ Set the following in `remappings.txt`, replacing any previous definitions of the
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 ----
 
-NOTE: The above remappings mean that both `@openzeppelin/contracts/` (including proxy contracts deployed by this library) and `@openzeppelin/contracts-upgradeable/` come from your installation of the `openzeppelin-contracts-upgradeable` submodule and its subdirectories, which includes its own transitive copy of `openzeppelin-contracts` of the same release version number. This format is needed for Etherscan verification to work. Particularly, any copies of `openzeppelin-contracts` that you install separately are NOT used.
+NOTE: 上面的重映射意味着 `@openzeppelin/contracts/`（包括由此库部署的代理合约）和 `@openzeppelin/contracts-upgradeable/` 都来自您安装的 `openzeppelin-contracts-upgradeable` 子模块及其子目录，其中包括它自己的相同发行版本号的 `openzeppelin-contracts` 的传递副本。 需要此格式才能使 Etherscan 验证工作。 特别是，您单独安装的任何 `openzeppelin-contracts` 副本都不会被使用。
 
-=== Using OpenZeppelin Contracts v4
+=== 使用 OpenZeppelin Contracts v4
 
-Run these commands, replacing `v4.9.6` with the specific version of OpenZeppelin Contracts that you are using:
+运行以下命令，将 `v4.9.6` 替换为您正在使用的 OpenZeppelin Contracts 的特定版本：
 
 [source,console]
 ----
@@ -39,7 +39,7 @@ forge install OpenZeppelin/openzeppelin-contracts@v4.9.6
 forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v4.9.6
 ----
 
-Set the following in `remappings.txt`:
+在 `remappings.txt` 中设置以下内容：
 
 [source]
 ----
@@ -47,19 +47,19 @@ Set the following in `remappings.txt`:
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 ----
 
-NOTE: Use `LegacyUpgrades.sol` instead of `Upgrades.sol` to upgrade existing deployments that were created with OpenZeppelin Contracts v4.
+NOTE: 使用 `LegacyUpgrades.sol` 而不是 `Upgrades.sol` 来升级使用 OpenZeppelin Contracts v4 创建的现有部署。
 
-=== Optional: Alternative installation methods
+=== 可选项：替代安装方法
 
 ==== NPM
 
-Follow the steps above, but instead of running `forge install OpenZeppelin/openzeppelin-foundry-upgrades`, use this command instead:
+按照上面的步骤，但不要运行 `forge install OpenZeppelin/openzeppelin-foundry-upgrades`，而是使用以下命令：
 [source,console]
 ----
 npm install @openzeppelin/foundry-upgrades
 ----
 
-Then add the following additional line to `remappings.txt`, in addition to the ones described above:
+然后将以下附加行添加到 `remappings.txt` 中，以及上面描述的行：
 [source,console]
 ----
 openzeppelin-foundry-upgrades/=node_modules/@openzeppelin/foundry-upgrades/src/
@@ -67,27 +67,27 @@ openzeppelin-foundry-upgrades/=node_modules/@openzeppelin/foundry-upgrades/src/
 
 ==== Soldeer
 
-Follow the steps above, but instead of running `forge install OpenZeppelin/openzeppelin-foundry-upgrades`, use one of the install commands described in https://soldeer.xyz/project/openzeppelin-foundry-upgrades
+按照上面的步骤，但不要运行 `forge install OpenZeppelin/openzeppelin-foundry-upgrades`，而是使用 https://soldeer.xyz/project/openzeppelin-foundry-upgrades 中描述的安装命令之一
 
-Then add the following additional line to `remappings.txt`, in addition to the ones described above (replace `0.3.6` with the version of the plugin that you installed):
+然后将以下附加行添加到 `remappings.txt` 中，以及上面描述的行（将 `0.3.6` 替换为您安装的插件版本）：
 [source,console]
 ----
 openzeppelin-foundry-upgrades/=dependencies/openzeppelin-foundry-upgrades-0.3.6/src/
 ----
 
-== Foundry Requirements
+== Foundry 要求
 
-This library requires https://github.com/foundry-rs/forge-std[forge-std] version 1.9.5 or higher.
+此库需要 https://github.com/foundry-rs/forge-std[forge-std] 1.9.5 或更高版本。
 
-== Before Running
+== 运行之前
 
-This library uses the https://docs.openzeppelin.com/upgrades-plugins/api-core[OpenZeppelin Upgrades CLI] for upgrade safety validations, which are run by default during deployments and upgrades.
+此库使用 https://docs.openzeppelin.com/upgrades-plugins/api-core[OpenZeppelin Upgrades CLI] 进行升级安全验证，默认情况下会在部署和升级期间运行。
 
-If you want to be able to run upgrade safety validations, the following are needed:
+如果您想能够运行升级安全验证，则需要以下内容：
 
-1. Install https://nodejs.org/[Node.js].
+. 安装 https://nodejs.org/[Node.js]。
 
-2. Configure your `foundry.toml` to enable ffi, ast, build info and storage layout:
+. 配置您的 `foundry.toml` 以启用 ffi、ast、build info 和存储布局：
 
 [source,json]
 ----
@@ -99,17 +99,17 @@ extra_output = ["storageLayout"]
 ----
 
 [start=3]
-3. If you are upgrading your contract from a previous version, add the `@custom:oz-upgrades-from <reference>` annotation to the new version of your contract according to https://docs.openzeppelin.com/upgrades-plugins/api-core#define-reference-contracts[Define Reference Contracts] or specify the `referenceContract` option when calling the library's functions.
+. 如果您要从之前的版本升级您的合约，请根据 https://docs.openzeppelin.com/upgrades-plugins/api-core#define-reference-contracts[定义参考合约] 将 `@custom:oz-upgrades-from <reference>` 注释添加到您的合约的新版本，或者在调用库的函数时指定 `referenceContract` 选项。
 
-4. Run `forge clean` before running your Foundry script or tests, or include the `--force` option when running `forge script` or `forge test`.
+. 在运行 Foundry 脚本或测试之前运行 `forge clean`，或者在运行 `forge script` 或 `forge test` 时包含 `--force` 选项。
 
-If you do not want to run upgrade safety validations, you can skip the above steps and use the xref:api-foundry-upgrades.adoc#Options[`unsafeSkipAllChecks` option] when calling the `Upgrades` library's functions, or use the `UnsafeUpgrades` library instead. Note that these are dangerous options meant to be used as a last resort.
+如果您不想运行升级安全验证，您可以跳过上述步骤，并在调用 `Upgrades` 库的函数时使用 xref:api-foundry-upgrades.adoc#Options[`unsafeSkipAllChecks` 选项]，或者改用 `UnsafeUpgrades` 库。 请注意，这些都是危险的选项，旨在作为最后的手段使用。
 
-=== Optional: Custom output directory
+=== 可选项：自定义输出目录
 
-By default, this library assumes your Foundry output directory is set to "out".
+默认情况下，此库假定您的 Foundry 输出目录设置为 "out"。
 
-If you want to use a custom output directory, set it in your `foundry.toml` and provide read permissions for the directory. For example (replace `my-output-dir` with the directory that you want to use):
+如果您想使用自定义输出目录，请在您的 `foundry.toml` 中设置它，并为该目录提供读取权限。 例如（将 `my-output-dir` 替换为您要使用的目录）：
 
 [source,json]
 ----
@@ -118,105 +118,105 @@ out = "my-output-dir"
 fs_permissions = [{ access = "read", path = "my-output-dir" }]
 ----
 
-Then in a `.env` at your project root, set the `FOUNDRY_OUT` environment variable to match the custom output directory, for example:
+然后在您的项目根目录下的 `.env` 中，设置 `FOUNDRY_OUT` 环境变量以匹配自定义输出目录，例如：
 [source]
 ----
 FOUNDRY_OUT=my-output-dir
 ----
 
-=== Windows environments
+=== Windows 环境
 
-If you are using Windows, set the `OPENZEPPELIN_BASH_PATH` environment variable to the fully qualified path of the `bash` executable.
-For example, if you are using https://gitforwindows.org/[Git for Windows], add the following line in the `.env` file of your project (using forward slashes):
+如果您使用的是 Windows，请将 `OPENZEPPELIN_BASH_PATH` 环境变量设置为 `bash` 可执行文件的完全限定路径。
+例如，如果您使用的是 https://gitforwindows.org/[Git for Windows]，请在您的项目的 `.env` 文件中添加以下行（使用正斜杠）：
 
 [source]
 ----
 OPENZEPPELIN_BASH_PATH="C:/Program Files/Git/bin/bash"
 ----
 
-== Usage
+== 用法
 
-Depending on which major version of OpenZeppelin Contracts you are using, and whether you want to run upgrade safety validations and/or use OpenZeppelin Defender, use the table below to determine which library to import:
+根据您使用的 OpenZeppelin Contracts 的主要版本，以及您是否要运行升级安全验证和/或使用 OpenZeppelin Defender，请使用下表确定要导入哪个库：
 
 [options="header"]
 |===
 | | OpenZeppelin Contracts v5 | OpenZeppelin Contracts v4
-| *Runs validations, supports Defender* | `import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";` | `import {Upgrades} from "openzeppelin-foundry-upgrades/LegacyUpgrades.sol";`
-| *No validations, does not support Defender* | `import {UnsafeUpgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";` | `import {UnsafeUpgrades} from "openzeppelin-foundry-upgrades/LegacyUpgrades.sol";`
+| *运行验证，支持 Defender* | `import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";` | `import {Upgrades} from "openzeppelin-foundry-upgrades/LegacyUpgrades.sol";`
+| *不验证，不支持 Defender* | `import {UnsafeUpgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";` | `import {UnsafeUpgrades} from "openzeppelin-foundry-upgrades/LegacyUpgrades.sol";`
 |===
 
-Import one of the above libraries in your Foundry scripts or tests, for example:
+在您的 Foundry 脚本或测试中导入上述库之一，例如：
 [source,solidity]
 ----
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 ----
 
-Also import the implementation contract that you want to validate, deploy, or upgrade to, for example:
+还要导入您要验证、部署或升级到的实现合约，例如：
 [source,solidity]
 ----
 import {MyToken} from "src/MyToken.sol";
 ----
 
-Then call functions from the imported library to run validations, deployments, or upgrades.
+然后从导入的库中调用函数以运行验证、部署或升级。
 
-== Examples
+== 例子
 
-The following examples assume you are using OpenZeppelin Contracts v5 and want to run upgrade safety validations.
+以下示例假定您正在使用 OpenZeppelin Contracts v5 并且想要运行升级安全验证。
 
-=== Deploy a proxy
+=== 部署代理
 
-Deploy a UUPS proxy:
+部署 UUPS 代理：
 [source,solidity]
 ----
 address proxy = Upgrades.deployUUPSProxy(
     "MyContract.sol",
-    abi.encodeCall(MyContract.initialize, ("arguments for the initialize function"))
+    abi.encodeCall(MyContract.initialize, ("initialize 函数的参数"))
 );
 ----
 
-Deploy a transparent proxy:
+部署透明代理：
 [source,solidity]
 ----
 address proxy = Upgrades.deployTransparentProxy(
     "MyContract.sol",
     INITIAL_OWNER_ADDRESS_FOR_PROXY_ADMIN,
-    abi.encodeCall(MyContract.initialize, ("arguments for the initialize function"))
+    abi.encodeCall(MyContract.initialize, ("initialize 函数的参数"))
 );
 ----
 
-Deploy an upgradeable beacon and a beacon proxy:
+部署可升级信标和信标代理：
 [source,solidity]
 ----
 address beacon = Upgrades.deployBeacon("MyContract.sol", INITIAL_OWNER_ADDRESS_FOR_BEACON);
 
 address proxy = Upgrades.deployBeaconProxy(
     beacon,
-    abi.encodeCall(MyContract.initialize, ("arguments for the initialize function"))
+    abi.encodeCall(MyContract.initialize, ("initialize 函数的参数"))
 );
 ----
 
-=== Use your contract
+=== 使用您的合约
 
-Call your contract's functions as normal, but remember to always use the proxy address:
+像往常一样调用您的合约的函数，但请记住始终使用代理地址：
 [source,solidity]
 ----
 MyContract instance = MyContract(proxy);
 instance.myFunction();
 ----
 
-=== Upgrade a proxy or beacon
+=== 升级代理或信标
 
-Upgrade a transparent or UUPS proxy and call an arbitrary function (such as a reinitializer) during the upgrade process:
+升级透明代理或 UUPS 代理，并在升级过程中调用任意函数（例如重新初始化程序）：
 [source,solidity]
 ----
 Upgrades.upgradeProxy(
     transparentProxy,
     "MyContractV2.sol",
-    abi.encodeCall(MyContractV2.foo, ("arguments for foo"))
+    abi.encodeCall(MyContractV2.foo, ("foo 的参数"))
 );
 ----
 
-Upgrade a transparent or UUPS proxy without calling any additional function:
+升级透明代理或 UUPS 代理，而不调用任何其他函数：
 [source,solidity]
 ----
 Upgrades.upgradeProxy(
@@ -226,13 +226,13 @@ Upgrades.upgradeProxy(
 );
 ----
 
-Upgrade a beacon:
+升级信标：
 [source,solidity]
 ----
 Upgrades.upgradeBeacon(beacon, "MyContractV2.sol");
 ----
 
-WARNING: When upgrading a proxy or beacon, ensure that the new contract either has its `@custom:oz-upgrades-from <reference>` annotation set to the name of the old implementation contract used by the proxy or beacon, or set it with the `referenceContract` option, for example:
+WARNING: 升级代理或信标时，请确保新合约的 `@custom:oz-upgrades-from <reference>` 注释设置为代理或信标使用的旧实现合约的名称，或者使用 `referenceContract` 选项进行设置，例如：
 [source,solidity]
 ----
 Options memory opts;
@@ -241,7 +241,7 @@ Upgrades.upgradeProxy(proxy, "MyContractV2.sol", "", opts);
 // or Upgrades.upgradeBeacon(beacon, "MyContractV2.sol", opts);
 ----
 
-TIP: If possible, keep the old version of the implementation contract's source code somewhere in your project to use as a reference as above. This requires the new version to be in a different directory, Solidity file, or using a different contract name. Otherwise, if you want to use the same directory and name for the new version, keep the build info directory from the previous deployment (or build it from an older branch of your project repository) and reference it as follows:
+TIP: 如果可能，请将旧版本的实现合约的源代码保留在项目中的某个位置，以便用作上述参考。 这要求新版本位于不同的目录、Solidity 文件中或使用不同的合约名称。 否则，如果您想对新版本使用相同的目录和名称，请保留先前部署的构建信息目录（或从项目存储库的较旧分支构建它）并按如下方式引用它：
 [source,solidity]
 ----
 Options memory opts;
@@ -251,31 +251,31 @@ Upgrades.upgradeProxy(proxy, "MyContract.sol", "", opts);
 // or Upgrades.upgradeBeacon(beacon, "MyContract.sol", opts);
 ----
 
-== Coverage Testing
+== 覆盖率测试
 
-To enable code coverage reports with `forge coverage`, use the following deployment pattern in your tests: instantiate your implementation contracts directly and use the `UnsafeUpgrades` library. For example:
+要在 `forge coverage` 中启用代码覆盖率报告，请在您的测试中使用以下部署模式：直接实例化您的实现合约并使用 `UnsafeUpgrades` 库。 例如：
 ```solidity
 address implementation = address(new MyContract());
 address proxy = UnsafeUpgrades.deployUUPSProxy(
     implementation,
-    abi.encodeCall(MyContract.initialize, ("arguments for the initialize function"))
+    abi.encodeCall(MyContract.initialize, ("initialize 函数的参数"))
 );
 ```
 
-WARNING: `UnsafeUpgrades` is not recommended for use in Forge scripts. It does not validate whether your contracts are upgrade safe or whether new implementations are compatible with previous ones. Ensure you run validations before any actual deployments or upgrades, such as by using the `Upgrades` library in scripts.
+WARNING: 不建议在 Forge 脚本中使用 `UnsafeUpgrades`。 它不验证您的合约是否可以安全升级，或者新的实现是否与之前的实现兼容。 在任何实际部署或升级之前，请确保运行验证，例如通过在脚本中使用 `Upgrades` 库。
 
-== Deploying and Verifying
+== 部署和验证
 
-Run your script with `forge script` to broadcast and deploy. See Foundry's https://book.getfoundry.sh/guides/scripting-with-solidity[Solidity Scripting] guide.
+使用 `forge script` 运行您的脚本以广播和部署。 请参阅 Foundry 的 https://book.getfoundry.sh/guides/scripting-with-solidity[Solidity 脚本]指南。
 
-IMPORTANT: Include the `--sender <ADDRESS>` flag for the `forge script` command when performing upgrades, specifying an address that owns the proxy or proxy admin. Otherwise, `OwnableUnauthorizedAccount` errors will occur.
+IMPORTANT: 执行升级时，请为 `forge script` 命令包含 `--sender <ADDRESS>` 标志，指定拥有代理或代理管理员的地址。 否则，将发生 `OwnableUnauthorizedAccount` 错误。
 
-NOTE: Include the `--verify` flag for the `forge script` command if you want to verify source code such as on Etherscan. This will verify your implementation contracts along with any proxy contracts as part of the deployment.
+NOTE: 如果您想验证源代码（例如在 Etherscan 上），请为 `forge script` 命令包含 `--verify` 标志。 这将验证您的实现合约以及任何代理合约作为部署的一部分。
 
-== Usage with Defender
+== 与 Defender 一起使用
 
-If you are using OpenZeppelin Defender, see xref:foundry-defender.adoc[OpenZeppelin Defender with Foundry] for how to use it for deployments.
+如果您正在使用 OpenZeppelin Defender，请参阅 xref:foundry-defender.adoc[将 OpenZeppelin Defender 与 Foundry 结合使用]，了解如何将其用于部署。
 
 == API
 
-See xref:api-foundry-upgrades.adoc[Foundry Upgrades API] for the full API documentation.
+有关完整的 API 文档，请参阅 xref:api-foundry-upgrades.adoc[Foundry Upgrades API]。

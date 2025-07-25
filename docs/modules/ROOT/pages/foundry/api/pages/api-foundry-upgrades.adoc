@@ -1,42 +1,42 @@
-= OpenZeppelin Foundry Upgrades API
+= OpenZeppelin Foundry 升级 API
 
-== Contract name formats
+== 合约名称格式
 
-Contract names must be provided in specific formats depending on context. The following are the required formats for each context:
+合约名称必须以特定格式提供，具体取决于上下文。以下是每个上下文所需的格式：
 
-=== Foundry artifact format
+=== Foundry 工件格式
 
-Contexts:
+上下文：
 
-* `contractName` parameter
-* `referenceContract` option if `referenceBuildInfoDir` option is not set
+* `contractName` 参数
+* 如果未设置 `referenceBuildInfoDir` 选项，则为 `referenceContract` 选项
 
-Can be in any of the following forms according to Foundry's https://book.getfoundry.sh/cheatcodes/get-code[getCode] cheatcode:
+可以根据 Foundry 的 https://book.getfoundry.sh/cheatcodes/get-code[getCode] 作弊码采用以下任何一种形式：
 
-* the Solidity file name, e.g. `ContractV1.sol`
-* the Solidity file name and the contract name, e.g. `ContractV1.sol:ContractV1`
-* the artifact path relative to the project root directory, e.g. `out/ContractV1.sol/ContractV1.json`
+* Solidity 文件名，例如 `ContractV1.sol`
+* Solidity 文件名和合约名称，例如 `ContractV1.sol:ContractV1`
+* 相对于项目根目录的工件路径，例如 `out/ContractV1.sol/ContractV1.json`
 
-=== Annotation format
+=== 注解格式
 
-Contexts:
+上下文：
 
-* `@custom:oz-upgrades-from <reference>` annotation
-* `referenceContract` option if `referenceBuildInfoDir` option is set
+* `@custom:oz-upgrades-from <reference>` 注解
+* 如果设置了 `referenceBuildInfoDir` 选项，则为 `referenceContract` 选项
 
-Can be in any of the following forms according to the https://docs.openzeppelin.com/upgrades-plugins/api-core#define-reference-contracts[OpenZeppelin Upgrades CLI]:
+可以根据 https://docs.openzeppelin.com/upgrades-plugins/api-core#define-reference-contracts[OpenZeppelin Upgrades CLI] 采用以下任何一种形式：
 
-* the contract name, e.g. `ContractV1`
-* fully qualified contract name, e.g. `contracts/tokens/ContractV1.sol:ContractV1`
+* 合约名称，例如 `ContractV1`
+* 完全限定的合约名称，例如 `contracts/tokens/ContractV1.sol:ContractV1`
 
-If the `referenceBuildInfoDir` option is set, include the build info directory short name as a prefix, resulting in one of the following forms:
+如果设置了 `referenceBuildInfoDir` 选项，包括构建信息目录短名称作为前缀，产生以下形式之一：
 
-* the build info directory short name and the contract name, e.g. `build-info-v1:ContractV1`
-* the build info directory short name and the fully qualified contract name, e.g. `build-info-v1:contracts/tokens/ContractV1.sol:ContractV1`
+* 构建信息目录短名称和合约名称，例如 `build-info-v1:ContractV1`
+* 构建信息目录短名称和完全限定的合约名称，例如 `build-info-v1:contracts/tokens/ContractV1.sol:ContractV1`
 
-== Common Options
+== 常用选项
 
-The following options can be used with some of the below functions. See https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades/blob/main/src/Options.sol[Options.sol] for detailed descriptions of each option.
+以下选项可以与以下某些函数一起使用。 有关每个选项的详细说明，请参见 https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades/blob/main/src/Options.sol[Options.sol]。
 
 include::Options.adoc[]
 

@@ -1,18 +1,18 @@
-= Proxy Upgrade Pattern
+= 代理升级模式
 
-This article describes the "unstructured storage" proxy pattern, the fundamental building block of OpenZeppelin Upgrades.
+本文介绍了“非结构化存储”代理模式，它是 OpenZeppelin Upgrades 的基本组成部分。
 
-TIP: For a more in depth read, please see https://blog.openzeppelin.com/proxy-patterns/[our proxy-patterns blog post], which discusses the need for proxies, goes into more technical detail on the subject, elaborates on other possible proxy patterns that were considered for OpenZeppelin Upgrades, and more.
+TIP: 想要更深入的阅读，请查看 https://blog.openzeppelin.com/proxy-patterns/[我们的代理模式博客文章]，其中讨论了对代理的需求，深入探讨了该主题的技术细节，详细阐述了 OpenZeppelin Upgrades 考虑的其他可能的代理模式，等等。
 
 [[why-upgrade-a-contract]]
-== Why Upgrade a Contract?
+== 为什么升级合约？
 
-By design, smart contracts are immutable. On the other hand, software quality heavily depends on the ability to upgrade and patch source code in order to produce iterative releases. Even though blockchain based software profits significantly from the technology's immutability, still a certain degree of mutability is needed for bug fixing and potential product improvements. OpenZeppelin Upgrades solves this apparent contradiction by providing an easy to use, simple, robust, and opt-in upgrade mechanism for smart contracts that can be controlled by any type of governance, be it a multi-sig wallet, a simple address or a complex DAO.
+从设计上讲，智能合约是不可变的。另一方面，软件质量在很大程度上取决于升级和修补源代码以生成迭代版本的能力。 即使基于区块链的软件从技术的不可变性中获益匪浅，但仍然需要一定程度的可变性来进行错误修复和潜在的产品改进。 OpenZeppelin Upgrades 通过为智能合约提供易于使用、简单、稳健和可选的升级机制来解决这一明显的矛盾，该机制可以由任何类型的治理来控制，无论是多重签名钱包、简单地址还是复杂的 DAO。
 
 [[upgrading-via-the-proxy-pattern]]
-== Upgrading via the Proxy Pattern
+== 通过代理模式进行升级
 
-The basic idea is using a proxy for upgrades. The first contract is a simple wrapper or "proxy" which users interact with directly and is in charge of forwarding transactions to and from the second contract, which contains the logic. The key concept to understand is that the logic contract can be replaced while the proxy, or the access point is never changed. Both contracts are still immutable in the sense that their code cannot be changed, but the logic contract can simply be swapped by another contract. The wrapper can thus point to a different logic implementation and in doing so, the software is "upgraded".
+基本思想是使用代理进行升级。 第一个合约是一个简单的包装器或“代理”，用户直接与之交互，并负责在第二个合约之间转发交易，第二个合约包含逻辑。要理解的关键概念是可以替换逻辑合约，而代理或访问点永远不会更改。 这两个合约仍然是不可变的，因为它们的代码无法更改，但逻辑合约可以简单地被另一个合约替换。 这样，包装器可以指向不同的逻辑实现，并且通过这样做，软件被“升级”。
 
 ....
 User ---- tx ---> Proxy ----------> Implementation_v0
@@ -23,9 +23,9 @@ User ---- tx ---> Proxy ----------> Implementation_v0
 ....
 
 [[proxy-forwarding]]
-== Proxy Forwarding
+== 代理转发
 
-The most immediate problem that proxies need to solve is how the proxy exposes the entire interface of the logic contract without requiring a one to one mapping of the entire logic contract's interface. That would be difficult to maintain, prone to errors, and would make the interface itself not upgradeable. Hence, a dynamic forwarding mechanism is required. The basics of such a mechanism are presented in the code below:
+代理需要解决的最直接的问题是如何在不需要逻辑合约整个接口的一对一映射的情况下，公开逻辑合约的整个接口。 这将难以维护，容易出错，并且会使接口本身不可升级。因此，需要动态转发机制。 下面的代码介绍了这种机制的基础知识：
 
 [source,solidity]
 ----
@@ -54,25 +54,25 @@ assembly {
 }
 ----
 
-This code can be put in the https://docs.soliditylang.org/en/latest/contracts.html#fallback-function[fallback function] of a proxy, and will forward any call to any function with any set of parameters to the logic contract without it needing to know anything in particular of the logic contract's interface. In essence, (1) the `calldata` is copied to memory, (2) the call is forwarded to the logic contract, (3) the return data from the call to the logic contract is retrieved, and (4) the returned data is forwarded back to the caller.
+此代码可以放在代理的 https://docs.soliditylang.org/en/latest/contracts.html#fallback-function[fallback 函数]中，并将任何带有任何参数集的调用转发到逻辑合约，而无需它知道逻辑合约接口的任何特定信息。 本质上，(1) `calldata` 被复制到内存，(2) 调用被转发到逻辑合约，(3) 从调用逻辑合约返回的数据被检索，并且 (4) 返回的数据被转发回调用者。
 
-A very important thing to note is that the code makes use of the EVM's `delegatecall` opcode which executes the callee's code in the context of the caller's state. That is, the logic contract controls the proxy's state and the logic contract's state is meaningless. Thus, the proxy doesn't only forward transactions to and from the logic contract, but also represents the pair's state. The state is in the proxy and the logic is in the particular implementation that the proxy points to.
+非常重要的一点是，该代码使用了 EVM 的 `delegatecall` 操作码，该操作码在调用者的状态上下文中执行被调用者的代码。 也就是说，逻辑合约控制代理的状态，而逻辑合约的状态没有意义。 因此，代理不仅将交易转发到逻辑合约并从逻辑合约转发交易，而且还表示该对的状态。 状态在代理中，逻辑在代理指向的特定实现中。
 
 [[unstructured-storage-proxies]]
-== Unstructured Storage Proxies
+== 非结构化存储代理
 
-A problem that quickly comes up when using proxies has to do with the way in which variables are stored in the proxy contract. Suppose that the proxy stores the logic contract's address in its only variable `address public _implementation;`. Now, suppose that the logic contract is a basic token whose first variable is `address public _owner`. Both variables are 32 byte in size, and as far as the EVM knows, occupy the first slot of the resulting execution flow of a proxied call. When the logic contract writes to `_owner`, it does so in the scope of the proxy's state, and in reality writes to `_implementation`. This problem can be referred to as a "storage collision".
+使用代理时很快出现的一个问题与变量在代理合约中的存储方式有关。 假设代理将逻辑合约的地址存储在其唯一的变量 `address public _implementation;` 中。 现在，假设逻辑合约是一个基本 token，其第一个变量是 `address public _owner`。 两个变量的大小均为 32 字节，并且就 EVM 所知，它们占据了代理调用的最终执行流程的第一个插槽。 当逻辑合约写入 `_owner` 时，它在代理状态的范围内执行此操作，实际上是写入 `_implementation`。 此问题可以称为“存储冲突”。
 
 ....
 |Proxy                     |Implementation           |
 |--------------------------|-------------------------|
-|address _implementation   |address _owner           | <=== Storage collision!
+|address _implementation   |address _owner           | <=== 存储冲突！
 |...                       |mapping _balances        |
 |                          |uint256 _supply          |
 |                          |...                      |
 ....
 
-There are many ways to overcome this problem, and the "unstructured storage" approach which OpenZeppelin Upgrades implements works as follows. Instead of storing the `_implementation` address at the proxy's first storage slot, it chooses a pseudo random slot instead. This slot is sufficiently random, that the probability of a logic contract declaring a variable at the same slot is negligible. The same principle of randomizing slot positions in the proxy's storage is used in any other variables the proxy may have, such as an admin address (that is allowed to update the value of `_implementation`), etc.
+有很多方法可以克服这个问题，OpenZeppelin Upgrades 实现的“非结构化存储”方法的工作方式如下。 它并没有将 `_implementation` 地址存储在代理的第一个存储槽中，而是选择了一个伪随机插槽。 此插槽具有足够的随机性，以至于逻辑合约在同一插槽中声明变量的概率可以忽略不计。 代理可能拥有的任何其他变量（例如，允许更新 `_implementation` 值的管理员地址等）都使用相同的随机化槽位置的原理。
 
 ....
 |Proxy                     |Implementation           |
@@ -85,12 +85,12 @@ There are many ways to overcome this problem, and the "unstructured storage" app
 |...                       |                         |
 |...                       |                         |
 |...                       |                         |
-|address _implementation   |                         | <=== Randomized slot.
+|address _implementation   |                         | <=== 随机槽。
 |...                       |                         |
 |...                       |                         |
 ....
 
-An example of how the randomized storage is achieved, following http://eips.ethereum.org/EIPS/eip-1967[EIP 1967]:
+以下是根据 http://eips.ethereum.org/EIPS/eip-1967[EIP 1967] 实现随机存储的示例：
 
 [source,solidity]
 ----
@@ -99,26 +99,26 @@ bytes32 private constant implementationPosition = bytes32(uint256(
 ));
 ----
 
-As a result, a logic contract doesn't need to care about overwriting any of the proxy's variables. Other proxy implementations that face this problem usually imply having the proxy know about the logic contract's storage structure and adapt to it, or instead having the logic contract know about the proxy's storage structure and adapt to it. This is why this approach is called "unstructured storage"; neither of the contracts needs to care about the structure of the other.
+因此，逻辑合约不必担心覆盖任何代理的变量。 面临此问题的其他代理实现通常意味着代理了解逻辑合约的存储结构并适应它，或者逻辑合约了解代理的存储结构并适应它。 这就是为什么这种方法被称为“非结构化存储”； 两个合约都不需要关心对方的结构。
 
 [[storage-collisions-between-implementation-versions]]
-== Storage Collisions Between Implementation Versions
+== 实现版本之间的存储冲突
 
-As discussed, the unstructured approach avoids storage collisions between the logic contract and the proxy. However, storage collisions between different versions of the logic contract can occur. In this case, imagine that the first implementation of the logic contract stores `address public _owner` at the first storage slot and an upgraded logic contract stores `address public _lastContributor` at the same first slot. When the updated logic contract attempts to write to the `_lastContributor` variable, it will be using the same storage position where the previous value for `_owner` was being stored, and overwrite it!
+如前所述，非结构化方法避免了逻辑合约和代理之间的存储冲突。 但是，可能会发生逻辑合约的不同版本之间的存储冲突。 在这种情况下，假设逻辑合约的第一个实现在第一个存储槽中存储 `address public _owner`，而升级后的逻辑合约在同一第一个槽中存储 `address public _lastContributor`。 当更新后的逻辑合约尝试写入 `_lastContributor` 变量时，它将使用存储 `_owner` 的先前值的相同存储位置并覆盖它！
 
-Incorrect storage preservation:
+不正确的存储保留：
 
 ....
 |Implementation_v0   |Implementation_v1        |
 |--------------------|-------------------------|
-|address _owner      |address _lastContributor | <=== Storage collision!
+|address _owner      |address _lastContributor | <=== 存储冲突！
 |mapping _balances   |address _owner           |
 |uint256 _supply     |mapping _balances        |
 |...                 |uint256 _supply          |
 |                    |...                      |
 ....
 
-Correct storage preservation:
+正确的存储保留：
 
 ....
 |Implementation_v0   |Implementation_v1        |
@@ -126,22 +126,22 @@ Correct storage preservation:
 |address _owner      |address _owner           |
 |mapping _balances   |mapping _balances        |
 |uint256 _supply     |uint256 _supply          |
-|...                 |address _lastContributor | <=== Storage extension.
+|...                 |address _lastContributor | <=== 存储扩展。
 |                    |...                      |
 ....
 
-The unstructured storage proxy mechanism doesn't safeguard against this situation. It is up to the user to have new versions of a logic contract extend previous versions, or otherwise guarantee that the storage hierarchy is always appended to but not modified. However, OpenZeppelin Upgrades detects such collisions and warns the developer appropriately.
+非结构化存储代理机制不能防止这种情况。 用户有责任让逻辑合约的新版本扩展以前的版本，或者以其他方式保证存储层次结构始终附加到而不是修改。 但是，OpenZeppelin Upgrades 会检测到此类冲突并适当地警告开发人员。
 
 [[the-constructor-caveat]]
-== The Constructor Caveat
+== 构造函数注意事项
 
-In Solidity, code that is inside a constructor or part of a global variable declaration is not part of a deployed contract's runtime bytecode. This code is executed only once, when the contract instance is deployed. As a consequence of this, the code within a logic contract's constructor will never be executed in the context of the proxy's state. To rephrase, proxies are completely oblivious to the storage trie changes that are performed by the constructor. It's simply as if they weren't there for the proxy. (Note that `immutable` variables can be reflected in a proxy contract but xref:faq.adoc#why-cant-i-use-immutable-variables[should be used with caution].)
+在 Solidity 中，构造函数内部或全局变量声明中的代码不属于已部署合约的运行时字节码。 此代码仅在部署合约实例时执行一次。 因此，在代理状态的上下文中永远不会执行逻辑合约构造函数中的代码。 换句话说，代理完全不知道构造函数执行的存储 trie 更改。 就像它们不存在对于代理一样。 （请注意，`immutable` 变量可以反映在代理合约中，但是 xref:faq.adoc#why-cant-i-use-immutable-variables[应该谨慎使用]。）
 
-The problem is easily solved though. Logic contracts should move the code within the constructor to a regular 'initializer' function, and have this function be called whenever the proxy links to this logic contract. Special care needs to be taken with this initializer function so that it can only be called once, which is one of the properties of constructors in general programming.
+但是，该问题很容易解决。 逻辑合约应该将构造函数中的代码移动到常规的“初始化程序”函数中，并在代理链接到此逻辑合约时调用此函数。 必须特别注意此初始化程序函数，以便只能调用一次，这是一般编程中构造函数的属性之一。
 
-This is why when we create a proxy using OpenZeppelin Upgrades, you can provide the name of the initializer function and pass parameters.
+这就是为什么当我们使用 OpenZeppelin Upgrades 创建代理时，您可以提供初始化程序函数的名称并传递参数。
 
-To ensure that the `initialize` function can only be called once, a simple modifier is used. OpenZeppelin Upgrades provides this functionality via a contract that can be extended:
+为了确保 `initialize` 函数只能被调用一次，使用了一个简单的修饰符。 OpenZeppelin Upgrades 通过可以扩展的合约提供此功能：
 
 [source,solidity]
 ----
@@ -162,38 +162,38 @@ contract MyContract is Initializable {
 }
 ----
 
-Notice how the contract extends `Initializable` and implements the `initializer` provided by it.
+请注意合约如何扩展 `Initializable` 并实现它提供的 `initializer`。
 
 [[transparent-proxies-and-function-clashes]]
-== Transparent Proxies and Function Clashes
+== 透明代理和函数冲突
 
-As described in the previous sections, upgradeable contract instances (or proxies) work by delegating all calls to a logic contract. However, the proxies need some functions of their own, such as `upgradeTo(address)` to upgrade to a new implementation. This begs the question of how to proceed if the logic contract also has a function named `upgradeTo(address)`: upon a call to that function, did the caller intend to call the proxy or the logic contract?
+如前几节所述，可升级的合约实例（或代理）通过将所有调用委托给逻辑合约来工作。 但是，代理需要一些自己的函数，例如 `upgradeTo(address)` 以升级到新的实现。 这就引出了一个问题，如果逻辑合约也有一个名为 `upgradeTo(address)` 的函数，该如何处理：在调用该函数时，调用者是打算调用代理还是逻辑合约？
 
-CAUTION: Clashing can also happen among functions with different names. Every function that is part of a contract's public ABI is identified, at the bytecode level, by a 4-byte identifier. This identifier depends on the name and arity of the function, but since it's only 4 bytes, there is a possibility that two different functions with different names may end up having the same identifier. The Solidity compiler tracks when this happens within the same contract, but not when the collision happens across different ones, such as between a proxy and its logic contract. Read https://medium.com/nomic-labs-blog/malicious-backdoors-in-ethereum-proxies-62629adf3357[this article] for more info on this.
+CAUTION: 冲突也可能发生在具有不同名称的函数之间。 合约公共 ABI 的每个函数在字节码级别都由一个 4 字节的标识符标识。 此标识符取决于函数的名称和元数，但由于它只有 4 个字节，因此两个具有不同名称的不同函数可能最终具有相同的标识符。 Solidity 编译器会跟踪同一合约中发生这种情况，但不会跟踪跨不同合约发生的冲突，例如代理与其逻辑合约之间。 阅读 https://medium.com/nomic-labs-blog/malicious-backdoors-in-ethereum-proxies-62629adf3357[本文]以获取更多信息。
 
-The way OpenZeppelin Upgrades deals with this problem is via the _transparent proxy_ pattern. A transparent proxy will decide which calls are delegated to the underlying logic contract based on the caller address (i.e., the `msg.sender`):
+OpenZeppelin Upgrades 处理此问题的方式是通过 _transparent proxy_ 模式。 透明代理将根据调用者地址（即 `msg.sender`）决定将哪些调用委托给底层逻辑合约：
 
-* If the caller is the admin of the proxy (the address with rights to upgrade the proxy), then the proxy will *not* delegate any calls, and only answer any messages it understands.
-* If the caller is any other address, the proxy will *always* delegate a call, no matter if it matches one of the proxy's functions.
+* 如果调用者是代理的管理员（具有升级代理权限的地址），则代理将 *不* 委托任何调用，而只会回答它理解的任何消息。
+* 如果调用者是任何其他地址，则无论它是否匹配代理的函数之一，代理将 *始终* 委托调用。
 
-Assuming a proxy with an `owner()` and an `upgradeTo()` function, that delegates calls to an ERC20 contract with an `owner()` and a `transfer()` function, the following table covers all scenarios:
+假设一个代理具有 `owner()` 和 `upgradeTo()` 函数，该函数将调用委托给具有 `owner()` 和 `transfer()` 函数的 ERC20 合约，下表涵盖了所有情况：
 
 [cols=",,,",options="header",]
 |==============================================================
 |msg.sender |owner() |upgradeTo() |transfer()
-|Owner |returns proxy.owner() |returns proxy.upgradeTo() |fails
-|Other |returns erc20.owner() |fails |returns erc20.transfer()
+|Owner |返回 proxy.owner() |返回 proxy.upgradeTo() |失败
+|Other |返回 erc20.owner() |失败 |返回 erc20.transfer()
 |==============================================================
 
-Fortunately, OpenZeppelin Upgrades accounts for this situation, and uses an intermediary ProxyAdmin contract for each transparent proxy. Even if you call the `deploy` command from your node's default account, the ProxyAdmin contracts will be the actual admins of your transparent proxies. This means that you will be able to interact with the proxies from any of your node's accounts, without having to worry about the nuances of the transparent proxy pattern. Only advanced users that create proxies from Solidity need to be aware of the transparent proxies pattern.
+幸运的是，OpenZeppelin Upgrades 考虑到了这种情况，并为每个透明代理使用了一个中间 ProxyAdmin 合约。 即使您从节点的默认帐户调用 `deploy` 命令，ProxyAdmin 合约也将是透明代理的实际管理员。 这意味着您将能够从节点的任何帐户与代理进行交互，而无需担心透明代理模式的细微差别。 只有从 Solidity 创建代理的高级用户才需要了解透明代理模式。
 
 [[summary]]
-== Summary
+== 总结
 
-Any developer using upgradeable contracts should be familiar with proxies in the ways that are described in this article. In the end, the concept is very simple, and OpenZeppelin Upgrades is designed to encapsulate all the proxy mechanics in a way that the amount of things you need to keep in mind when developing projects are reduced to an absolute minimum. It all comes down to the following list:
+任何使用可升级合约的开发人员都应该熟悉本文中描述的方式的代理。 最后，这个概念非常简单，OpenZeppelin Upgrades 旨在封装所有代理机制，以便在开发项目时需要记住的事情的数量减少到绝对最小值。 这一切都归结为以下列表：
 
-* Have a basic understanding of what a proxy is
-* Always extend storage instead of modifying it
-* Make sure your contracts use initializer functions instead of constructors
+* 对代理是什么有一个基本的了解
+* 始终扩展存储而不是修改它
+* 确保您的合约使用初始化函数而不是构造函数
 
-Furthermore, the OpenZeppelin Upgrades will let you know when something goes wrong with one of the items in this list.
+此外，当列表中的某个项目出现问题时，OpenZeppelin Upgrades 会通知您。

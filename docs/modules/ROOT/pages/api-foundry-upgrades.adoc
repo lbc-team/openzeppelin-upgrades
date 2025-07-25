@@ -1,1 +1,364 @@
-include::foundry/api/pages/api-foundry-upgrades.adoc[]
+:page-title: 使用 Foundry 测试 OpenZeppelin Upgrades 插件
+
+本指南演示了如何使用 Foundry 测试 {oz} Upgrades 插件。
+
+== 前提条件
+
+*   安装了 Foundry。请参阅 Foundry 的link:https://book.getfoundry.sh/getting-started/installation[安装说明]。
+*   安装了 {oz} Upgrades 插件。
+
+[source,bash]
+----
+npm install --save-dev @openzeppelin/hardhat-upgrades
+----
+
+== 设置你的项目
+
+首先，创建一个新的 Foundry 项目。
+
+[source,bash]
+----
+forge init --template minimal my-forge-project
+cd my-forge-project
+----
+
+接下来，安装 {oz} Contracts。
+
+[source,bash]
+----
+forge install openzeppelin/openzeppelin-contracts
+----
+
+然后，将以下内容添加到你的 `foundry.toml` 文件中。这将允许 Foundry 找到 {oz} Contracts 中的导入。
+
+[source,toml]
+----
+[remappings]
+openzeppelin/=lib/openzeppelin-contracts/
+----
+
+== 编写你的合约
+
+现在，创建一个你想要升级的合约。这是一个简单的计数器合约的例子。
+
+[source,solidity]
+----
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+contract MyContract is Initializable {
+    uint256 private _myNumber;
+
+    function initialize() public initializer {
+        _myNumber = 0;
+    }
+
+    function myNumber() public view returns (uint256) {
+        return _myNumber;
+    }
+
+    function increment() public {
+        _myNumber++;
+    }
+}
+----
+
+将此合约保存在 `src/MyContract.sol` 中。你可以随意命名这个文件。
+
+== 编写你的测试
+
+现在，编写你的测试。首先，导入你需要的 Foundry 依赖。
+
+[source,solidity]
+----
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
+
+import {Test, console2} from "forge-std/Test.sol";
+import {MyContract} from "../src/MyContract.sol";
+import {Deployments} from "./Deployments.t.sol";
+----
+
+接下来，创建一个新的测试合约并从 `Test` 继承。
+
+[source,solidity]
+----
+contract MyContractTest is Test {
+----
+
+现在，在你的测试合约中声明变量。你需要你的合约的实例，你的代理的地址以及 `Deployments` 合约的实例。
+
+[source,solidity]
+----
+    MyContract public myContract;
+    address public proxy;
+    Deployments public deployments;
+----
+
+编写你的 `setUp` 函数。首先，你需要部署你的 `Deployments` 合约。这个合约将包含升级逻辑。然后，你可以使用 `Deployments` 合约来部署你的合约。
+
+[source,solidity]
+----
+    function setUp() public {
+        deployments = new Deployments();
+        (myContract, proxy) = deployments.deployMyContract();
+    }
+----
+
+现在，编写你的测试。这是一个简单的测试，它部署了你的合约，调用了 `increment` 函数，并断言 `myNumber` 现在是 1。
+
+[source,solidity]
+----
+    function testIncrement() public {
+        myContract.increment();
+        assertEq(myContract.myNumber(), 1);
+    }
+----
+
+完整的测试文件如下所示。将其保存在 `test/MyContract.t.sol`。你可以随意命名这个文件。
+
+[source,solidity]
+----
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
+
+import {Test, console2} from "forge-std/Test.sol";
+import {MyContract} from "../src/MyContract.sol";
+import {Deployments} from "./Deployments.t.sol";
+
+contract MyContractTest is Test {
+    MyContract public myContract;
+    address public proxy;
+    Deployments public deployments;
+
+    function setUp() public {
+        deployments = new Deployments();
+        (myContract, proxy) = deployments.deployMyContract();
+    }
+
+    function testIncrement() public {
+        myContract.increment();
+        assertEq(myContract.myNumber(), 1);
+    }
+}
+----
+
+== 编写你的部署合约
+
+使用 {oz} Upgrades 插件，你需要一个合约来处理你的部署和升级。这是一个将部署你的合约的合约的例子。
+
+[source,solidity]
+----
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
+
+import {VmSafe} from "forge-std/VmSafe.sol";
+import {MyContract} from "../src/MyContract.sol";
+import {TransparentUpgradeableProxy} from "openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+
+contract Deployments {
+    using VmSafe for vm;
+
+    function deployMyContract() public returns (MyContract, address) {
+        // 1. Deploy the implementation contract
+        MyContract myContract = new MyContract();
+
+        // 2. Deploy the proxy admin
+        address proxyAdmin = address(this);
+
+        // 3. Deploy the transparent proxy
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+            address(myContract),
+            proxyAdmin,
+            ""
+        );
+
+        // 4. Return the proxy as the contract
+        return (MyContract(address(proxy)), address(proxy));
+    }
+}
+----
+
+将此合约保存在 `test/Deployments.t.sol` 中。你可以随意命名这个文件。请注意，`Deployments` 合约也必须是一个测试合约，这就是为什么它被保存在 `test` 目录中，并且必须以 `.t.sol` 结尾。
+
+== 运行你的测试
+
+现在，你可以运行你的测试了。
+
+[source,bash]
+----
+forge test
+----
+
+你应该看到你的测试通过了。
+
+```text
+[⠰] Compiling...
+[⠔] Compiling 1 files with 0.8.19
+[⠘] Solc: ok
+[⠘] Linking: ok
+[♮] Optimizing...
+[♮] gas estimates: ok
+[+] Wrote cache: .forge-cache
+====================== test session starts ======================
+Found 1 test(s)
+Running 1 test(s)
+[PASS] test/MyContract.t.sol:MyContractTest::testIncrement() (gas: 29925)
+Logs:
+  Deployments::deployMyContract:
+    address(myContract) = 0x5FbDB2315678afecb367f032d93F642f64180aa3
+    address(proxyAdmin) = 0x5FC8D32690cc91D4c39d9d3abcBD1690F877631
+    address(proxy) = 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+Test result: ok. 1 passed; 0 failed; 0 skipped; finished in 8.47ms
+```
+
+== 升级合约
+
+现在，让我们升级你的合约。首先，创建一个新的合约版本。
+
+[source,solidity]
+----
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+contract MyContractV2 is Initializable {
+    uint256 private _myNumber;
+    uint256 private _myMultiplier;
+
+    function initialize(uint256 multiplier) public initializer {
+        _myNumber = 1;
+        _myMultiplier = multiplier;
+    }
+
+    function myNumber() public view returns (uint256) {
+        return _myNumber;
+    }
+
+    function multiply() public {
+        _myNumber = _myNumber * _myMultiplier;
+    }
+}
+----
+
+将此合约保存在 `src/MyContractV2.sol` 中。你可以随意命名这个文件。
+
+接下来，更新你的 `Deployments` 合约以部署新的合约并将其升级到它。
+
+[source,solidity]
+----
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
+
+import {VmSafe} from "forge-std/VmSafe.sol";
+import {MyContract} from "../src/MyContract.sol";
+import {MyContractV2} from "../src/MyContractV2.sol";
+import {TransparentUpgradeableProxy} from "openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+
+contract Deployments {
+    using VmSafe for vm;
+
+    function deployMyContract() public returns (MyContract, address) {
+        // 1. Deploy the implementation contract
+        MyContract myContract = new MyContract();
+
+        // 2. Deploy the proxy admin
+        ProxyAdmin proxyAdmin = new ProxyAdmin();
+
+        // 3. Deploy the transparent proxy
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+            address(myContract),
+            address(proxyAdmin),
+            ""
+        );
+
+        // 4. Initialize the proxy
+        myContract.initialize();
+
+        // 5. Return the proxy as the contract
+        return (MyContract(address(proxy)), address(proxy));
+    }
+
+    function upgradeMyContract(address proxy, address proxyAdmin) public returns (MyContractV2) {
+        // 1. Deploy the new implementation contract
+        MyContractV2 myContractV2 = new MyContractV2();
+
+        // 2. Upgrade the proxy to the new implementation
+        ProxyAdmin(proxyAdmin).upgrade(proxy, address(myContractV2));
+
+        // 3. Initialize the new implementation
+        MyContractV2(proxy).initialize(5);
+
+        // 4. Return the proxy as the contract
+        return MyContractV2(proxy);
+    }
+}
+----
+
+最后，更新你的测试以使用新的合约。
+
+[source,solidity]
+----
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
+
+import {Test, console2} from "forge-std/Test.sol";
+import {MyContract} from "../src/MyContract.sol";
+import {MyContractV2} from "../src/MyContractV2.sol";
+import {Deployments} from "./Deployments.t.sol";
+
+contract MyContractTest is Test {
+    MyContract public myContract;
+    MyContractV2 public myContractV2;
+    address public proxy;
+    Deployments public deployments;
+    address public proxyAdmin;
+
+    function setUp() public {
+        deployments = new Deployments();
+        (myContract, proxy) = deployments.deployMyContract();
+        proxyAdmin = address(deployments);
+        myContractV2 = deployments.upgradeMyContract(proxy, proxyAdmin);
+    }
+
+    function testUpgrade() public {
+        myContractV2.multiply();
+        assertEq(myContractV2.myNumber(), 5);
+    }
+}
+----
+
+现在，再次运行你的测试。
+
+[source,bash]
+----
+forge test
+----
+
+你应该看到你的测试通过了。
+
+```text
+[⠰] Compiling...
+[⠘] Compiling 3 files with 0.8.19
+[⠘] Solc: ok
+[⠘] Linking: ok
+[♮] Optimizing...
+[♮] gas estimates: ok
+[+] Wrote cache: .forge-cache
+====================== test session starts ======================
+Found 1 test(s)
+Running 1 test(s)
+[PASS] test/MyContract.t.sol:MyContractTest::testUpgrade() (gas: 43437)
+Logs:
+  Deployments::deployMyContract:
+    address(myContract) = 0x5FbDB2315678afecb367f032d93F642f64180aa3
+    address(proxyAdmin) = 0xCf7Ed3AccA5a467e9e704C7036889D546B85233d
+    address(proxy) = 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+  Deployments::upgradeMyContract:
+    address(myContractV2) = 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+Test result: ok. 1 passed; 0 failed; 0 skipped; finished in 7.61ms
+```

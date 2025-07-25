@@ -1,40 +1,40 @@
-= Migrate from OpenZeppelin CLI
+= 从 OpenZeppelin CLI 迁移
 
-NOTE: This guide is for migrating from an old CLI which is deprecated.
+NOTE: 本指南适用于从已弃用的旧 CLI 迁移。
 
-This guide will walk through migrating a project from the OpenZeppelin CLI to OpenZeppelin Upgrades Plugins for either Truffle or Hardhat.
+本指南将引导您将项目从 OpenZeppelin CLI 迁移到用于 Truffle 或 Hardhat 的 OpenZeppelin Upgrades 插件。
 
 include::learn::partial$hardhat-truffle-toggle.adoc[]
 
-TIP: If you'd like to try out the instructions on a sample OpenZeppelin CLI project, you can clone https://github.com/OpenZeppelin/openzeppelin-upgrades-migration-example[OpenZeppelin/openzeppelin-upgrades-migration-example] and follow the setup instructions in the readme before continuing.
+TIP: 如果您想在示例 OpenZeppelin CLI 项目上尝试这些说明，您可以克隆 https://github.com/OpenZeppelin/openzeppelin-upgrades-migration-example[OpenZeppelin/openzeppelin-upgrades-migration-example] 并在继续之前按照自述文件中的设置说明进行操作。
 
-== Differences
+== 差异
 
-The main difference between the CLI and the plugins is that the former used to keep track of your upgradeable (and non-upgradeable) deployments for you. This was handy in some contexts since you didn't need to worry too much about proxies, implementations or addresses and you could just focus on operations like upgrading or sending transactions to your contracts just by their name.
+CLI 和插件之间的主要区别在于，前者用于跟踪您的可升级（和不可升级）部署。 这在某些情况下很方便，因为您不必过多担心代理、实现或地址，您可以只关注诸如升级或将交易发送到您的合约等操作，只需通过它们的名称即可。
 
-But having the CLI keep track of your deployments came at the expense of limiting your freedom to integrate with different tools and workflows. And since the plugins were designed to work independently of the CLI, we lifted that restriction so now you have the flexibility to keep track of your proxies the way you think it's best.
+但是让 CLI 跟踪您的部署，代价是限制了您与其他工具和工作流程集成的自由。 并且由于插件被设计为独立于 CLI 工作，因此我们解除了该限制，因此现在您可以灵活地以您认为最佳的方式跟踪您的代理。
 
-Keeping that aside, everything else remains the same since both the CLI and plugins make use of the same known `Proxy` and `ProxyAdmin` contracts under the hood, making up two different interfaces to manage them. This means that migrating your project won't touch **anything** on chain, everything is safe and local.
+撇开这一点不谈，其他一切都保持不变，因为 CLI 和插件都在底层使用了相同的已知 `Proxy` 和 `ProxyAdmin` 合约，从而构成了管理它们的两种不同的接口。 这意味着迁移您的项目不会触及链上的**任何内容**，一切都是安全和本地的。
 
-== Installation
+== 安装
 
 [.hardhat]
 --
-https://hardhat.org/tutorial/creating-a-new-hardhat-project.html[Install Hardhat] and when initializing it, select the `Create an empty hardhat.config.js` option.
+https://hardhat.org/tutorial/creating-a-new-hardhat-project.html[安装 Hardhat]，并在初始化时，选择 `Create an empty hardhat.config.js` 选项。
 
 ```bash
 $ npm install --save-dev hardhat
 $ npx hardhat
 ```
 
-Then install the Upgrades plugin:
+然后安装 Upgrades 插件：
 
 ```bash
 $ npm install --save-dev @openzeppelin/hardhat-upgrades
 $ npm install --save-dev @nomiclabs/hardhat-ethers ethers # peer dependencies
 ```
 
-Once it is done, register the plugin in the Hardhat config file by adding these lines:
+完成后，通过添加以下行在 Hardhat 配置文件中注册该插件：
 
 ```jsx
 // hardhat.config.js
@@ -48,27 +48,27 @@ module.exports = {
 
 [.truffle]
 --
-Install Truffle, and initialize your project.  
+安装 Truffle，然后初始化您的项目。
 
-WARNING: Choose not to overwrite contracts or test directories when Truffle asks. By not overwriting, you won't get an https://www.trufflesuite.com/docs/truffle/getting-started/running-migrations#initial-migration[initial migration]. Make sure you create `Migrations.sol` and the initial migration.
+WARNING: 当 Truffle 询问时，选择不覆盖合约或测试目录。 通过不覆盖，您将不会获得 https://www.trufflesuite.com/docs/truffle/getting-started/running-migrations#initial-migration[初始迁移]。 确保创建 `Migrations.sol` 和初始迁移。
 
 ```json
 $ npm install --save-dev truffle
 $ npx truffle init
 ```
 
-Then install the Upgrades plugin:
+然后安装 Upgrades 插件：
 
 ```bash
 $ npm install --save-dev @openzeppelin/truffle-upgrades
 ```
 --
 
-== Migrating the CLI project
+== 迁移 CLI 项目
 
-WARNING: This is a one way process. Make sure you keep backups or version control copies of your `.openzeppelin/` folder.
+WARNING: 这是一个单向过程。 确保您保留 `.openzeppelin/` 文件夹的备份或版本控制副本。
 
-Now, let's migrate our project by running:
+现在，让我们通过运行以下命令来迁移我们的项目：
 
 ```bash
 $ npx migrate-oz-cli-project
@@ -80,6 +80,7 @@ $ npx migrate-oz-cli-project
 ✔ Deleting .openzeppelin/project.json
 
 These were your project's compiler options:
+// 这些是您项目的编译器选项：
 {
   "compilerSettings": {
     "optimizer": {
@@ -97,13 +98,13 @@ These were your project's compiler options:
 }
 ```
 
-This script was installed along with the plugins and what it does is to delete the CLI project file and turn your old network files (all of which live under the `.openzeppelin` directory) into their Upgrades plugin equivalent. Again, nothing on chain is changed, only local files. Notice also that once you've run this you can no longer use the CLI to manage this project's contracts unless you revert the changes through backups or version control.
+此脚本随插件一起安装，它的作用是删除 CLI 项目文件并将您的旧网络文件（所有这些文件都位于 `.openzeppelin` 目录下）转换为其 Upgrades 插件等效文件。 同样，链上的任何内容都不会更改，只有本地文件。 另请注意，一旦您运行此命令，除非您通过备份或版本控制还原更改，否则您将无法再使用 CLI 来管理此项目的合约。
 
-The migration script will also export a `openzeppelin-cli-export.json` file into your working directory containing all the data that the CLI used to manage for you and now you're free to use however you think it's best. This is including your compiler settings, which are also printed at the end of the migration for convenience. Let's add them to our new project config:
+迁移脚本还将 `openzeppelin-cli-export.json` 文件导出到您的工作目录中，其中包含 CLI 用于为您管理的所有数据，现在您可以自由地以您认为最佳的方式使用它。 这包括您的编译器设置，为了方便起见，这些设置也会在迁移结束时打印出来。 让我们将它们添加到我们的新项目配置中：
 
 [.hardhat]
 --
-Copy compiler settings into the https://hardhat.org/config/#available-config-options[`solidity` field] in the Hardhat config file
+将编译器设置复制到 Hardhat 配置文件中的 https://hardhat.org/config/#available-config-options[`solidity` 字段]
 
 ```json
 // hardhat.config.js
@@ -116,8 +117,8 @@ module.exports = {
     version: "0.6.12",
     settings: {
       optimizer: {
-        enabled: false,
-        runs: 200
+        enabled": false,
+        runs": 200
       }
     }
   }
@@ -127,7 +128,7 @@ module.exports = {
 
 [.truffle]
 --
-Copy compiler settings into the https://www.trufflesuite.com/docs/truffle/reference/configuration#compiler-configuration[`compilers` field] of our Truffle config file
+将编译器设置复制到我们 Truffle 配置文件的 https://www.trufflesuite.com/docs/truffle/reference/configuration#compiler-configuration[`compilers` 字段]
 
 ```json
 // truffle-config.js
@@ -139,8 +140,8 @@ module.exports = {
       version: "0.6.12",
       settings: {
         optimizer: {
-          enabled: false,
-          runs: 200
+          enabled": false,
+          runs": 200
         }
       }
     }
@@ -149,13 +150,13 @@ module.exports = {
 ```
 --
 
-NOTE: The solidity compiler configuration format is different in `truffle-config.js` and `hardhat.config.js` files
+NOTE: solidity 编译器配置格式在 `truffle-config.js` 和 `hardhat.config.js` 文件中是不同的
 
-And that's it, you have successfully migrated your CLI project. Let's now try your new setup upgrading one of your migrated contracts.
+就是这样，您已成功迁移您的 CLI 项目。 现在让我们尝试使用您的新设置来升级您的迁移合约之一。
 
-== Upgrade to a new version
+== 升级到新版本
 
-Let's say we had a `Box` contract in our CLI project, deployed to the Rinkeby network. Then if we open our export file, we'll see something like this:
+假设我们在 CLI 项目中有一个 `Box` 合约，已部署到 Rinkeby 网络。 然后，如果我们打开我们的导出文件，我们将看到类似这样的内容：
 
 ```json
 // openzeppelin-cli-export.json
@@ -177,23 +178,24 @@ Let's say we had a `Box` contract in our CLI project, deployed to the Rinkeby ne
   },
   "compiler": {
     // we'll ignore compiler settings for this
+    // 我们将忽略此编译器的设置
   }
 }
 ```
 
-What we're seeing in here is the JSON representation of our upgradeable contract in terms of addresses:
+我们在这里看到的是地址方面可升级合约的 JSON 表示形式：
 
-- `address`: the proxy address (the proxy contract contains your upgradeable contract state)
-- `implementation`: the implementation address (your upgradeable contract logic)
-- `admin`: the address of the proxy admin, which will probably belong to a `ProxyAdmin` contract unless you set up otherwise
+- `address`: 代理地址（代理合约包含您的可升级合约状态）
+- `implementation`: 实现地址（您的可升级合约逻辑）
+- `admin`: 代理管理员的地址，除非您另行设置，否则它可能属于 `ProxyAdmin` 合约
 
-And this is how it would look like if we decided to upgrade our `Box` contract to a `BoxV2` contract using the plugins and this export file:
+如果我们决定使用插件和此导出文件将我们的 `Box` 合约升级到 `BoxV2` 合约，它将如下所示：
 
-These scripts are just examples of how to use the exported data. We make no suggestions on whether to keep that file as it is or how to handle its data. This is up to the user now.
+这些脚本只是如何使用导出数据的示例。 我们不对是否按原样保留该文件或如何处理其数据提出任何建议。 这现在取决于用户。
 
 [.hardhat]
 --
-With Hardhat, we would write a script (*you can read more about Hardhat scripts https://hardhat.org/guides/scripts.html[here] and about using the `hardhat-upgrades` plugin https://docs.openzeppelin.com/upgrades-plugins/1.x/hardhat-upgrades[here]*):
+对于 Hardhat，我们将编写一个脚本（*您可以在 https://hardhat.org/guides/scripts.html[此处]阅读有关 Hardhat 脚本的更多信息，并在 https://docs.openzeppelin.com/upgrades-plugins/1.x/hardhat-upgrades[此处]阅读有关使用 `hardhat-upgrades` 插件的更多信息*）：
 
 ```jsx
 // scripts/upgradeBoxToV2.js
@@ -218,7 +220,7 @@ $ npx hardhat run scripts/upgradeBoxToV2.js --network rinkeby
 [.truffle]
 --
 
-With Truffle, we would write a migration (*you can read more about Truffle migrations https://www.trufflesuite.com/docs/truffle/getting-started/running-migrations[here] and about using the `truffle-upgrades` plugin https://docs.openzeppelin.com/upgrades-plugins/1.x/truffle-upgrades[here]*):
+对于 Truffle，我们将编写一个迁移（*您可以在 https://www.trufflesuite.com/docs/truffle/getting-started/running-migrations[此处]阅读有关 Truffle 迁移的更多信息，并在 https://docs.openzeppelin.com/upgrades-plugins/1.x/truffle-upgrades[此处]阅读有关使用 `truffle-upgrades` 插件的更多信息*）：
 
 ```jsx
 // migrations/2_upgrade_box_contract.js
@@ -240,4 +242,4 @@ $ npx truffle migrate --network rinkeby
 ```
 --
 
-And that's it! You have migrated your OpenZeppelin CLI project to Truffle or Hardhat and performed an upgrade using the plugins.
+就是这样！ 您已将您的 OpenZeppelin CLI 项目迁移到 Truffle 或 Hardhat，并使用插件执行了升级。

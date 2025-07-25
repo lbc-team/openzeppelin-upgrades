@@ -1,19 +1,19 @@
-= Writing Upgradeable Contracts
+= 编写可升级合约
 
-When working with upgradeable contracts using OpenZeppelin Upgrades, there are a few minor caveats to keep in mind when writing your Solidity code.
+当使用 OpenZeppelin Upgrades 处理可升级合约时，在编写你的 Solidity 代码时，有几点小注意事项需要记住。
 
-It's worth mentioning that these restrictions have their roots in how the Ethereum VM works, and apply to all projects that work with upgradeable contracts, not just OpenZeppelin Upgrades.
+值得一提的是，这些限制的根源在于 Ethereum VM 的工作方式，并且适用于所有处理可升级合约的项目，而不仅仅是 OpenZeppelin Upgrades。
 
 [[initializers]]
-== Initializers
+== 初始化函数
 
-You can use your Solidity contracts with OpenZeppelin Upgrades without any modifications, except for their _constructors_. Due to a requirement of the proxy-based upgradeability system, no constructors can be used in upgradeable contracts. To learn about the reasons behind this restriction, head to xref:proxies.adoc#the-constructor-caveat[Proxies].
+你可以在 OpenZeppelin Upgrades 中使用你的 Solidity 合约，而无需进行任何修改，除了它们的 _constructors_。由于基于代理的升级系统的要求，可升级合约中不能使用构造函数。要了解此限制背后的原因，请前往 xref:proxies.adoc#the-constructor-caveat[代理]。
 
-This means that, when using a contract with the OpenZeppelin Upgrades, you need to change its constructor into a regular function, typically named `initialize`, where you run all the setup logic:
+这意味着，当在 OpenZeppelin Upgrades 中使用合约时，你需要将其构造函数更改为一个常规函数，通常命名为 `initialize`，你可以在其中运行所有设置逻辑：
 
 [source,solidity]
 ----
-// NOTE: Do not use this code snippet, it's incomplete and has a critical vulnerability!
+// NOTE: 不要使用此代码片段，它是不完整的，并且存在严重的漏洞!
 
 pragma solidity ^0.6.0;
 
@@ -26,7 +26,7 @@ contract MyContract {
 }
 ----
 
-However, while Solidity ensures that a `constructor` is called only once in the lifetime of a contract, a regular function can be called many times. To prevent a contract from being _initialized_ multiple times, you need to add a check to ensure the `initialize` function is called only once:
+然而，尽管 Solidity 确保 `constructor` 在合约的生命周期内只被调用一次，但一个常规函数可以被多次调用。为了防止合约被多次 _initialized_，你需要添加一个检查来确保 `initialize` 函数只被调用一次：
 
 [source,solidity]
 ----
@@ -46,7 +46,7 @@ contract MyContract {
 }
 ----
 
-Since this pattern is very common when writing upgradeable contracts, OpenZeppelin Contracts provides an `Initializable` base contract that has an `initializer` modifier that takes care of this:
+由于这种模式在编写可升级合约时非常常见，OpenZeppelin Contracts 提供了一个 `Initializable` 基合约，它有一个 `initializer` 修饰符来处理这个问题：
 
 [source,solidity]
 ----
@@ -65,7 +65,7 @@ contract MyContract is Initializable {
 }
 ----
 
-Another difference between a `constructor` and a regular function is that Solidity takes care of automatically invoking the constructors of all ancestors of a contract. When writing an initializer, you need to take special care to manually call the initializers of all parent contracts. Note that the `initializer` modifier can only be called once even when using inheritance, so parent contracts should use the `onlyInitializing` modifier:
+`constructor` 和常规函数的另一个区别是，Solidity 会自动调用合约所有祖先的构造函数。在编写初始化函数时，你需要特别注意手动调用所有父合约的初始化函数。请注意，即使在使用继承时，`initializer` 修饰符也只能被调用一次，因此父合约应使用 `onlyInitializing` 修饰符：
 
 [source,solidity]
 ----
@@ -87,16 +87,16 @@ contract MyContract is BaseContract {
     uint256 public x;
 
     function initialize(uint256 _x) public initializer {
-        BaseContract.initialize(); // Do not forget this call!
+        BaseContract.initialize(); // 不要忘记这个调用！
         x = _x;
     }
 }
 ----
 
 [[use-upgradeable-libraries]]
-=== Using Upgradeable Smart Contract Libraries
+=== 使用可升级的智能合约库
 
-Keep in mind that this restriction affects not only your contracts, but also the contracts you import from a library. Consider for example https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.7.3/contracts/token/ERC20/ERC20.sol[`ERC20`] from OpenZeppelin Contracts: the contract initializes the token's name and symbol in its constructor.
+请记住，此限制不仅影响你的合约，还影响你从库中导入的合约。例如，考虑来自 OpenZeppelin Contracts 的 https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.7.3/contracts/token/ERC20/ERC20.sol[`ERC20`]：该合约在其构造函数中初始化了 token 的名称和符号。
 
 [source,solidity]
 ----
@@ -121,7 +121,7 @@ contract ERC20 is Context, IERC20 {
 }
 ----
 
-This means you should not be using these contracts in your OpenZeppelin Upgrades project. Instead, make sure to use `@openzeppelin/contracts-upgradeable`, which is an official fork of OpenZeppelin Contracts that has been modified to use initializers instead of constructors. Take a look at what https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/v4.7.3/contracts/token/ERC20/ERC20Upgradeable.sol[ERC20Upgradeable] looks like in `@openzeppelin/contracts-upgradeable`:
+这意味着你不应该在你的 OpenZeppelin Upgrades 项目中使用这些合约。相反，请确保使用 `@openzeppelin/contracts-upgradeable`，它是 OpenZeppelin Contracts 的官方分支，经过修改以使用初始化函数而不是构造函数。看看 `@openzeppelin/contracts-upgradeable` 中的 https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/v4.7.3/contracts/token/ERC20/ERC20Upgradeable.sol[ERC20Upgradeable] 是什么样的：
 
 [source,solidity]
 ----
@@ -149,23 +149,23 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
 }
 ----
 
-Whether using OpenZeppelin Contracts or another smart contract library, always make sure that the package is set up to handle upgradeable contracts.
+无论是使用 OpenZeppelin Contracts 还是另一个智能合约库，始终确保该包已设置为处理可升级合约。
 
-Learn more about OpenZeppelin Contracts Upgradeable in xref:contracts::upgradeable.adoc[Contracts: Using with Upgrades].
+在 xref:contracts::upgradeable.adoc[合约：与 Upgrades 一起使用] 中了解更多关于 OpenZeppelin Contracts Upgradeable 的信息。
 
 [[avoid-initial-values-in-field-declarations]]
-=== Avoiding Initial Values in Field Declarations
+=== 避免在字段声明中使用初始值
 
-Solidity allows defining initial values for fields when declaring them in a contract.
+Solidity 允许在合约中声明字段时为其定义初始值。
 
 [source,solidity]
 ----
 contract MyContract {
-    uint256 public hasInitialValue = 42; // equivalent to setting in the constructor
+    uint256 public hasInitialValue = 42; // 等同于在构造函数中设置
 }
 ----
 
-This is equivalent to setting these values in the constructor, and as such, will not work for upgradeable contracts. Make sure that all initial values are set in an initializer function as shown below; otherwise, any upgradeable instances will not have these fields set.
+这等同于在构造函数中设置这些值，因此，不适用于可升级合约。确保所有初始值都在初始化函数中设置，如下所示；否则，任何可升级的实例都不会设置这些字段。
 
 [source,solidity]
 ----
@@ -173,23 +173,23 @@ contract MyContract is Initializable {
     uint256 public hasInitialValue;
 
     function initialize() public initializer {
-        hasInitialValue = 42; // set initial value in initializer
+        hasInitialValue = 42; // 在初始化函数中设置初始值
     }
 }
 ----
 
-NOTE: It is still ok to define _constant_ state variables, because the compiler https://solidity.readthedocs.io/en/latest/contracts.html#constant-state-variables[does not reserve a storage slot for these variables], and every occurrence is replaced by the respective constant expression. So the following still works with OpenZeppelin Upgrades:
+NOTE: 定义 _constant_ 状态变量仍然是可以的，因为编译器 https://solidity.readthedocs.io/en/latest/contracts.html#constant-state-variables[不会为这些变量保留存储槽]，并且每次出现都会被相应的常量表达式替换。因此，以下代码仍然可以在 OpenZeppelin Upgrades 中使用：
 
 [source,solidity]
 ----
 contract MyContract {
-    uint256 public constant hasInitialValue = 42; // define as constant
+    uint256 public constant hasInitialValue = 42; // 定义为常量
 }
 ----
 
-=== Initializing the Implementation Contract
+=== 初始化实现合约
 
-Do not leave an implementation contract uninitialized. An uninitialized implementation contract can be taken over by an attacker, which may impact the proxy. To prevent the implementation contract from being used, you should invoke the `_disableInitializers` function in the constructor to automatically lock it when it is deployed:
+不要将实现合约保留为未初始化状态。未初始化的实现合约可能会被攻击者接管，这可能会影响代理。为了防止实现合约被使用，你应该在构造函数中调用 `_disableInitializers` 函数，以便在部署时自动锁定它：
 
 [source,solidity]
 ----
@@ -199,18 +199,18 @@ constructor() {
 }
 ----
 
-=== Validating Initializers
+=== 验证初始化函数
 
-The OpenZeppelin Upgrades plugins will automatically detect specific issues with initializers in implementation contracts. These include checking if your implementation contract is missing an initializer when there are parent initializers that need to be called, if a parent initializer is not called, or if a parent initializer is called more than once. The plugins will also warn if parent initializers are not called in linearized order.
+OpenZeppelin Upgrades 插件将自动检测实现合约中初始化函数的特定问题。这些问题包括检查你的实现合约是否缺少初始化函数（当存在需要调用的父级初始化函数时），是否未调用父级初始化函数，或者是否多次调用父级初始化函数。如果父级初始化函数未按线性顺序调用，插件也会发出警告。
 
-Reinitializers are not included in validations by default, because the Upgrades plugins cannot determine whether they are intended to be used for new deployments. If you want to validate a reinitializer function as an initializer that can be used for new deployments, annotate it with `@custom:oz-upgrades-validate-as-initializer`. Note that functions which cannot possibly be initializers are always ignored, such as private functions which cannot be called externally or by child contracts.
+默认情况下，重新初始化函数不包含在验证中，因为 Upgrades 插件无法确定它们是否旨在用于新部署。如果你想验证一个重新初始化函数，并将其作为可用于新部署的初始化函数，请使用 `@custom:oz-upgrades-validate-as-initializer` 对其进行注解。请注意，不可能作为初始化函数的函数（例如无法从外部或子合约调用的私有函数）始终会被忽略。
 
 [[creating-new-instances-from-your-contract-code]]
-== Creating New Instances From Your Contract Code
+== 从你的合约代码创建新实例
 
-When creating a new instance of a contract from your contract's code, these creations are handled directly by Solidity and not by OpenZeppelin Upgrades, which means that *these contracts will not be upgradeable*.
+当从你的合约代码创建一个合约的新实例时，这些创建由 Solidity 直接处理，而不是由 OpenZeppelin Upgrades 处理，这意味着 *这些合约将不可升级*。
 
-For instance, in the following example, even if `MyContract` is deployed as upgradeable, the `token` contract created is not:
+例如，在以下示例中，即使 `MyContract` 被部署为可升级的，创建的 `token` 合约也不是：
 
 [source,solidity]
 ----
@@ -225,12 +225,12 @@ contract MyContract is Initializable {
     ERC20 public token;
 
     function initialize() public initializer {
-        token = new ERC20("Test", "TST"); // This contract will not be upgradeable
+        token = new ERC20("Test", "TST"); // 这个合约将不可升级
     }
 }
 ----
 
-If you would like the `ERC20` instance to be upgradeable, the easiest way to achieve that is to simply accept an instance of that contract as a parameter, and inject it after creating it:
+如果你希望 `ERC20` 实例是可升级的，最简单的方法是简单地接受该合约的一个实例作为参数，并在创建后注入它：
 
 [source,solidity]
 ----
@@ -251,24 +251,24 @@ contract MyContract is Initializable {
 ----
 
 [[potentially-unsafe-operations]]
-== Potentially Unsafe Operations
+== 潜在的不安全操作
 
-When working with upgradeable smart contracts, you will always interact with the contract instance, and never with the underlying logic contract. However, nothing prevents a malicious actor from sending transactions to the logic contract directly. This does not pose a threat, since any changes to the state of the logic contracts do not affect your contract instances, as the storage of the logic contracts is never used in your project.
+当使用可升级的智能合约时，你将始终与合约实例进行交互，而不是与底层逻辑合约进行交互。但是，没有什么可以阻止恶意行为者直接向逻辑合约发送交易。这不会构成威胁，因为对逻辑合约状态的任何更改都不会影响你的合约实例，因为你的项目中从未使用过逻辑合约的存储。
 
-There is, however, an exception. If the direct call to the logic contract triggers a `selfdestruct` operation, then the logic contract will be destroyed, and all your contract instances will end up delegating all calls to an address without any code. This would effectively break all contract instances in your project.
+但是，有一个例外。如果直接调用逻辑合约会触发 `selfdestruct` 操作，那么逻辑合约将被销毁，并且你的所有合约实例最终会将所有调用委托给一个没有任何代码的地址。这将有效地破坏你项目中的所有合约实例。
 
-A similar effect can be achieved if the logic contract contains a `delegatecall` operation. If the contract can be made to `delegatecall` into a malicious contract that contains a `selfdestruct`, then the calling contract will be destroyed.
+如果逻辑合约包含 `delegatecall` 操作，则可以达到类似的效果。如果可以使合约 `delegatecall` 进入包含 `selfdestruct` 的恶意合约，那么调用合约将被销毁。
 
-As such, it is not allowed to use either `selfdestruct` or `delegatecall` in your contracts.
+因此，不允许在你的合约中使用 `selfdestruct` 或 `delegatecall`。
 
 [[modifying-your-contracts]]
-== Modifying Your Contracts
+== 修改你的合约
 
-When writing new versions of your contracts, either due to new features or bug fixing, there is an additional restriction to observe: you cannot change the order in which the contract state variables are declared, nor their type. You can read more about the reasons behind this restriction by learning about our xref:proxies.adoc[Proxies].
+在编写合约的新版本时，无论是由于新功能还是错误修复，都需要遵守一个额外的限制：你不能更改合约状态变量的声明顺序，也不能更改它们的类型。你可以通过了解我们的 xref:proxies.adoc[代理]，阅读更多关于此限制背后的原因。
 
-WARNING: Violating any of these storage layout restrictions will cause the upgraded version of the contract to have its storage values mixed up, and can lead to critical errors in your application.
+WARNING: 违反任何这些存储布局限制将导致合约的升级版本混淆其存储值，并可能导致你的应用程序中出现严重错误。
 
-This means that if you have an initial contract that looks like this:
+这意味着如果你有一个初始合约，如下所示：
 
 [source,solidity]
 ----
@@ -278,7 +278,7 @@ contract MyContract {
 }
 ----
 
-Then you cannot change the type of a variable:
+那么你不能更改变量的类型：
 
 [source,solidity]
 ----
@@ -288,7 +288,7 @@ contract MyContract {
 }
 ----
 
-Or change the order in which they are declared:
+或者更改它们的声明顺序：
 
 [source,solidity]
 ----
@@ -298,7 +298,7 @@ contract MyContract {
 }
 ----
 
-Or introduce a new variable before existing ones:
+或者在现有变量之前引入一个新变量：
 
 [source,solidity]
 ----
@@ -309,7 +309,7 @@ contract MyContract {
 }
 ----
 
-Or remove an existing variable:
+或者删除一个现有变量：
 
 [source,solidity]
 ----
@@ -318,7 +318,7 @@ contract MyContract {
 }
 ----
 
-If you need to introduce a new variable, make sure you always do so at the end:
+如果你需要引入一个新变量，请确保始终在末尾执行此操作：
 
 [source,solidity]
 ----
@@ -329,17 +329,17 @@ contract MyContract {
 }
 ----
 
-Keep in mind that if you rename a variable, then it will keep the same value as before after upgrading. This may be the desired behavior if the new variable is semantically the same as the old one:
+请记住，如果你重命名一个变量，那么它将在升级后保持与以前相同的值。如果新变量在语义上与旧变量相同，则这可能是所需的行为：
 
 [source,solidity]
 ----
 contract MyContract {
     uint256 private x;
-    string private z; // starts with the value from `y`
+    string private z; // 从 `y` 的值开始
 }
 ----
 
-And if you remove a variable from the end of the contract, note that the storage will not be cleared. A subsequent update that adds a new variable will cause that variable to read the leftover value from the deleted one.
+并且如果你从合约末尾删除一个变量，请注意存储不会被清除。后续添加新变量的更新将导致该变量读取已删除变量的剩余值。
 
 [source,solidity]
 ----
@@ -348,16 +348,16 @@ contract MyContract {
 }
 ----
 
-Then upgraded to:
+然后升级到：
 [source,solidity]
 ----
 contract MyContract {
     uint256 private x;
-    string private z; // starts with the value from `y`
+    string private z; // 从 `y` 的值开始
 }
 ----
 
-Note that you may also be inadvertently changing the storage variables of your contract by changing its parent contracts. For instance, if you have the following contracts:
+请注意，通过更改其父合约，你可能也会无意中更改合约的存储变量。例如，如果你有以下合约：
 
 [source,solidity]
 ----
@@ -374,14 +374,14 @@ contract B {
 contract MyContract is A, B {}
 ----
 
-Then modifying `MyContract` by swapping the order in which the base contracts are declared, or introducing new base contracts, will change how the variables are actually stored:
+那么通过交换声明基合约的顺序，或者引入新的基合约来修改 `MyContract`，将改变变量的实际存储方式：
 
 [source,solidity]
 ----
 contract MyContract is B, A {}
 ----
 
-You also cannot add new variables to base contracts, if the child has any variables of its own. Given the following scenario:
+如果子合约有自己的任何变量，你也不能向基合约添加新变量。给定以下场景：
 
 [source,solidity]
 ----
@@ -395,7 +395,7 @@ contract Child is Base {
 }
 ----
 
-If `Base` is modified to add an extra variable:
+如果修改 `Base` 以添加一个额外的变量：
 
 [source,solidity]
 ----
@@ -405,14 +405,14 @@ contract Base {
 }
 ----
 
-Then the variable `base2` would be assigned the slot that `child` had in the previous version. A workaround for this is to declare unused variables or storage gaps in base contracts that you may want to extend in the future, as a means of "reserving" those slots. Note that this trick does not involve increased gas usage.
+那么变量 `base2` 将被分配给 `child` 在先前版本中拥有的槽。一种解决方法是在你可能希望将来扩展的基合约中声明未使用的变量或存储间隙，作为“保留”这些槽的一种手段。请注意，此技巧不会增加 gas 使用量。
 
 [[storage-gaps]]
-=== Storage Gaps
+=== 存储间隙
 
-Storage gaps are a convention for reserving storage slots in a base contract, allowing future versions of that contract to use up those slots without affecting the storage layout of child contracts.
+存储间隙是一种在基合约中保留存储槽的约定，允许该合约的未来版本使用这些槽，而不会影响子合约的存储布局。
 
-To create a storage gap, declare a fixed-size array in the base contract with an initial number of slots. This can be an array of `uint256` so that each element reserves a 32 byte slot. Use the name `\\__gap` or a name starting with `__gap_` for the array so that OpenZeppelin Upgrades will recognize the gap:
+要创建存储间隙，请在基合约中声明一个固定大小的数组，其中包含初始数量的槽。这可以是一个 `uint256` 数组，以便每个元素保留一个 32 字节的槽。使用名称 `\__gap` 或以 `__gap_` 开头的名称作为数组，以便 OpenZeppelin Upgrades 能够识别该间隙：
 
 [source,solidity]
 ----
@@ -426,49 +426,49 @@ contract Child is Base {
 }
 ----
 
-If `Base` is later modified to add extra variable(s), reduce the appropriate number of slots from the storage gap, keeping in mind https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html#layout-of-state-variables-in-storage[Solidity's rules on how contiguous items are packed]. For example:
+如果稍后修改 `Base` 以添加额外的变量，请从存储间隙中减少适当数量的槽，同时记住 https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html#layout-of-state-variables-in-storage[Solidity 关于如何打包连续项目的规则]。例如：
 
 [source,solidity]
 ----
 contract Base {
     uint256 base1;
-    uint256 base2; // 32 bytes
+    uint256 base2; // 32 字节
     uint256[48] __gap;
 }
 ----
 
-Or:
+或者：
 
 [source,solidity]
 ----
 contract Base {
     uint256 base1;
-    address base2; // 20 bytes
-    uint256[48] __gap; // array always starts at a new slot
+    address base2; // 20 字节
+    uint256[48] __gap; // 数组始终从一个新槽开始
 }
 ----
 
-Or:
+或者：
 
 [source,solidity]
 ----
 contract Base {
     uint256 base1;
-    uint128 base2a; // 16 bytes
-    uint128 base2b; // 16 bytes - continues from the same slot as above
+    uint128 base2a; // 16 字节
+    uint128 base2b; // 16 字节 - 从与上面相同的槽继续
     uint256[48] __gap;
 }
 ----
 
-To help determine the proper storage gap size in the new version of your contract, you can simply attempt an upgrade using `upgradeProxy` or just run the validations with `validateUpgrade` (see docs for xref:api-hardhat-upgrades.adoc[Hardhat Upgrades] or xref:api-foundry-upgrades.adoc[Foundry Upgrades]). If a storage gap is not being reduced properly, you will see an error message indicating the expected size of the storage gap.
+为了帮助确定你的合约新版本中合适的存储间隙大小，你可以简单地尝试使用 `upgradeProxy` 进行升级，或者只是使用 `validateUpgrade` 运行验证（请参阅 xref:api-hardhat-upgrades.adoc[Hardhat Upgrades] 或 xref:api-foundry-upgrades.adoc[Foundry Upgrades] 的文档）。如果存储间隙没有被正确减少，你将看到一条错误消息，指示存储间隙的预期大小。
 
 [[namespaced-storage-layout]]
-=== Namespaced Storage Layout
+=== 命名空间存储布局
 
-https://eips.ethereum.org/EIPS/eip-7201[ERC-7201: Namespaced Storage Layout] is another convention that can be used to avoid storage layout errors when modifying base contracts or when changing the inheritance order of contracts. This convention is used in the upgradeable variant of OpenZeppelin Contracts starting with version 5.0.
+https://eips.ethereum.org/EIPS/eip-7201[ERC-7201: 命名空间存储布局] 是另一种约定，可用于避免在修改基合约或更改合约的继承顺序时出现存储布局错误。从 5.0 版本开始，OpenZeppelin Contracts 的可升级变体中使用了此约定。
 
-This convention involves placing all storage variables of a contract into one or more structs and annotating those structs with `@custom:storage-location erc7201:<NAMESPACE_ID>`. A namespace id is a string that uniquely identifies each namespace in a contract, so the same id must not be defined more than once in a contract or any of its base contracts.
+此约定涉及将合约的所有存储变量放入一个或多个结构中，并使用 `@custom:storage-location erc7201:<NAMESPACE_ID>` 注释这些结构。命名空间 ID 是一个字符串，用于唯一标识合约中的每个命名空间，因此不得在合约或其任何基本合约中多次定义相同的 ID。
 
-When using namespaced storage layouts, the OpenZeppelin Upgrades plugins will automatically detect the namespace ids and validate that each change within a namespace during an upgrade is safe according to the same rules as described in <<modifying-your-contracts>>.
+当使用命名空间存储布局时，OpenZeppelin Upgrades 插件将自动检测命名空间 ID，并验证升级期间命名空间中的每次更改是否安全，根据与 <<modifying-your-contracts>> 中描述的相同规则。
 
-NOTE: Solidity version 0.8.20 or higher is required in order to use the Upgrades plugins with namespaced storage layouts. The plugins will give an error if they detect `@custom:storage-location` annotations with an older version of Solidity, because older versions of the compiler do not produce sufficient information for validation of namespaced storage layouts.
+NOTE: 为了将 Upgrades 插件与命名空间存储布局一起使用，需要 Solidity 版本 0.8.20 或更高版本。如果插件检测到带有旧版本 Solidity 的 `@custom:storage-location` 注释，则会报错，因为旧版本的编译器不会产生足够的 信息来验证命名空间存储布局。

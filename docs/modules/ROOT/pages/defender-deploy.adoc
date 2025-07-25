@@ -1,11 +1,11 @@
-= OpenZeppelin Defender with Hardhat
+= OpenZeppelin Defender 与 Hardhat
 
-The Hardhat Upgrades package can use https://docs.openzeppelin.com/defender/[OpenZeppelin Defender] for deployments instead of ethers.js, which allows for features such as gas pricing estimation, resubmissions, and automated bytecode and source code verification.
+Hardhat Upgrades 包可以使用 https://docs.openzeppelin.com/defender/[OpenZeppelin Defender] 进行部署，而不是 ethers.js，这允许诸如 gas 价格估算、重新提交以及自动字节码和源代码验证等功能。
 
 [[configuration]]
-== Configuration
+== 配置
 
-Create a deployment environment on OpenZeppelin Defender and provide the Team API Key and secret in your `hardhat.config.js` or `hardhat.config.ts` file under `defender`:
+在 OpenZeppelin Defender 上创建一个部署环境，并在 `hardhat.config.js` 或 `hardhat.config.ts` 文件的 `defender` 下提供团队 API 密钥和密钥：
 
 [source,js]
 ----
@@ -17,13 +17,13 @@ module.exports = {
 }
 ----
 
-NOTE: The API key for the above must at least have the capability to Manage Deployments (optionally Manage Relayers is needed to create an approval process with a Relayer). You can configure your API keys at https://defender.openzeppelin.com/#/settings/api-keys.
+NOTE: 上述 API 密钥必须至少具有管理部署的权限（可选地，需要管理 Relayers 才能使用 Relayer 创建审批流程）。您可以在 https://defender.openzeppelin.com/#/settings/api-keys 配置您的 API 密钥。
 
 [[network-selection]]
-== Network Selection
+== 网络选择
 
-The network that is used with OpenZeppelin Defender is determined by the network that Hardhat is connected to.
-If you want to ensure that a specific network is used with Defender, set the `network` field in the `defender` section of your `hardhat.config.js` or `hardhat.config.ts` file:
+与 OpenZeppelin Defender 一起使用的网络由 Hardhat 连接到的网络决定。
+如果您想确保将特定网络与 Defender 一起使用，请在 `hardhat.config.js` 或 `hardhat.config.ts` 文件的 `defender` 部分中设置 `network` 字段：
 [source,js]
 ----
 module.exports = {
@@ -34,18 +34,18 @@ module.exports = {
   }
 }
 ----
-If set, this must be the name of a public, private or forked network in Defender. If Hardhat is connected to a different network while this is set, the deployment will not occur and will throw an error instead.
+如果设置了此项，则它必须是 Defender 中的公共、私有或 fork 网络的名称。如果 Hardhat 在设置此项时连接到其他网络，则不会发生部署，而是会抛出错误。
 
-NOTE: This is required if you have multiple forked networks in Defender with the same chainId, in which case the one with name matching the `network` field will be used.
+NOTE: 如果您在 Defender 中有多个具有相同 chainId 的 fork 网络，则需要这样做，在这种情况下，将使用名称与 `network` 字段匹配的网络。
 
 [[usage]]
-== Usage
+== 用法
 
-When using the xref:api-hardhat-upgrades.adoc[Hardhat Upgrades API functions], enable OpenZeppelin Defender deployments using any of the ways below.
+当使用 xref:api-hardhat-upgrades.adoc[Hardhat Upgrades API 函数]时，可以使用以下任何一种方式启用 OpenZeppelin Defender 部署。
 
-NOTE: Only functions that have the `useDefenderDeploy` option in their API reference support deployments through OpenZeppelin Defender. If you enable the following but use functions that do not support `useDefenderDeploy`, the first way below will cause those functions to deploy using ethers.js, whereas the second and third ways will cause those functions to give an error.
+NOTE: 只有在其 API 参考中具有 `useDefenderDeploy` 选项的函数才支持通过 OpenZeppelin Defender 进行部署。如果您启用以下内容但使用不支持 `useDefenderDeploy` 的函数，则以下第一种方式将导致这些函数使用 ethers.js 进行部署，而后两种方式将导致这些函数给出错误。
 
-- Recommended: In `hardhat.config.js` or `hardhat.config.ts`, set `useDefenderDeploy: true` under `defender`. For example:
+- 推荐：在 `hardhat.config.js` 或 `hardhat.config.ts` 中，在 `defender` 下设置 `useDefenderDeploy: true`。例如：
 
 [source,js]
 ----
@@ -73,7 +73,7 @@ async function main() {
 main();
 ----
 
-- Use the `defender` module instead of `upgrades` from the Hardhat Runtime Environment. Use this if you want to make sure Defender is used and want to see an error if the function does not support Defender. For example:
+- 使用 Hardhat 运行时环境中的 `defender` 模块而不是 `upgrades`。如果您想确保使用 Defender 并且希望在函数不支持 Defender 时看到错误，请使用此选项。例如：
 
 [source,js]
 ----
@@ -90,7 +90,7 @@ async function main() {
 main();
 ----
 
-- Use the `useDefenderDeploy` common option. Setting this option overrides the above for specific functions. For example:
+- 使用 `useDefenderDeploy` 通用选项。设置此选项将覆盖上述特定函数。例如：
 
 [source,js]
 ----

@@ -1,40 +1,40 @@
 = OpenZeppelin Truffle Upgrades API
 
-WARNING: This package is deprecated. The recommended alternative is to use https://hardhat.org/[Hardhat] along with the xref:hardhat-upgrades.adoc[Hardhat Upgrades] plugin.
+WARNING: 这个包已弃用。推荐的替代方案是使用 https://hardhat.org/[Hardhat] 以及 xref:hardhat-upgrades.adoc[Hardhat Upgrades] 插件。
 
-Both `deployProxy` and `upgradeProxy` functions will return instances of https://www.trufflesuite.com/docs/truffle/reference/contract-abstractions[Truffle contracts], and require Truffle contract classes (retrieved via `artifacts.require`) as arguments. For https://docs.openzeppelin.com/contracts/4.x/api/proxy#beacon[beacons], `deployBeacon` and `upgradeBeacon` will both return an upgradable beacon instance that can be used with a beacon proxy. All deploy and upgrade functions validate that the implementation contract is upgrade-safe, and will fail otherwise.
+`deployProxy` 和 `upgradeProxy` 函数都将返回 https://www.trufflesuite.com/docs/truffle/reference/contract-abstractions[Truffle 合约] 的实例，并且需要 Truffle 合约类（通过 `artifacts.require` 检索）作为参数。 对于 https://docs.openzeppelin.com/contracts/4.x/api/proxy#beacon[信标（beacons）]，`deployBeacon` 和 `upgradeBeacon` 都将返回一个可升级的信标实例，该实例可以与信标代理一起使用。 所有部署和升级函数都会验证实现合约是否为升级安全的，否则将失败。
 
 [[common-options]]
-== Common Options
+== 常用选项
 
-The following options are common to some functions.
+以下选项是一些函数通用的。
 
-* `deployer`: Should be set to the Truffle migration deployer during migrations.
-* `kind`: (`"uups" | "transparent" | "beacon"`) The kind of proxy to deploy, upgrade or import, or the kind of proxy that the implementation will be used with. `deployProxy()` and `upgradeProxy()` only support the values `"uups" | "transparent"`. Defaults to `"transparent"`. See xref:contracts:api:proxy.adoc#transparent-vs-uups[Transparent vs UUPS].
-* `unsafeAllow`: (`ValidationError[]`) Selectively disable one or more validation errors:
-** `"external-library-linking"`: Allows a deployment with external libraries linked to the implementation contract. (External libraries are otherwise xref:faq.adoc#why-cant-i-use-external-libraries[not yet supported].)
-** `"struct-definition"`, `"enum-definition"`: Used to be necessary to deploy a contract with structs or enums. No longer necessary.
-** `"state-variable-assignment"`: Allows assigning state variables in a contract even though they will be stored in the implementation.
-** `"state-variable-immutable"`: Allows use of immutable variables, which are not unsafe
-** `"constructor"`: Allows defining a constructor. See `constructorArgs`.
-** `"delegatecall"`, `"selfdestruct"`: Allow the use of these operations. Incorrect use of this option can put funds at risk of permanent loss. See xref:faq.adoc#delegatecall-selfdestruct[Can I safely use `delegatecall` and `selfdestruct`?]
-** `"missing-public-upgradeto"`: Allow UUPS implementations that do not contain a public `upgradeTo` or `upgradeToAndCall` function. Enabling this option is likely to cause a revert due to the built-in UUPS safety mechanism.
-* `unsafeAllowRenames`: (`boolean`) Configure storage layout check to allow variable renaming.
-* `unsafeSkipStorageCheck`: (`boolean`) upgrades the proxy or beacon without first checking for storage layout compatibility errors. This is a dangerous option meant to be used as a last resort.
-* `constructorArgs`: (`unknown[]`) Provide arguments for the constructor of the implementation contract. Note that these are different from initializer arguments, and will be used in the deployment of the implementation contract itself. Can be used to initialize immutable variables.
-* `redeployImplementation`: (`"always" | "never" | "onchange"`) Determines whether the implementation contract will be redeployed. Defaults to `"onchange"`.
-** If set to `"always"`, the implementation contract is always redeployed even if it was previously deployed with the same bytecode.
-** If set to `"never"`, the implementation contract is never redeployed. If the implementation contract was not previously deployed or is not found in the network file, an error will be thrown.
-** If set to `"onchange"`, the implementation contract is redeployed only if the bytecode has changed from previous deployments.
-* `txOverrides`: (`TruffleTxOptions`) A Truffle https://trufflesuite.com/docs/truffle/how-to/contracts/run-migrations/#deployerdeploycontract-args-options[options] object to override transaction parameters, such as `gas` and `gasPrice`. Applies to all transactions sent by a function with this option, even if the function sends multiple transactions.
+* `deployer`：应该在 Truffle 迁移期间设置为 Truffle 迁移部署器。
+* `kind`：(`"uups" | "transparent" | "beacon"`) 要部署、升级或导入的代理的类型，或实现将使用的代理的类型。 `deployProxy()` 和 `upgradeProxy()` 仅支持值 `"uups" | "transparent"`。 默认为 `"transparent"`。 请参阅 xref:contracts:api:proxy.adoc#transparent-vs-uups[Transparent vs UUPS]。
+* `unsafeAllow`：(`ValidationError[]`) 有选择地禁用一个或多个验证错误：
+** `"external-library-linking"`：允许部署链接到实现合约的外部库。（外部库目前 xref:faq.adoc#why-cant-i-use-external-libraries[尚不支持]。）
+** `"struct-definition"`, `"enum-definition"`: 过去需要使用结构体或枚举来部署合约。 现在不再需要。
+** `"state-variable-assignment"`：允许在合约中分配状态变量，即使它们将存储在实现中。
+** `"state-variable-immutable"`：允许使用不可变变量，这些变量不是不安全的
+** `"constructor"`：允许定义构造函数。 请参阅 `constructorArgs`。
+** `"delegatecall"`, `"selfdestruct"`：允许使用这些操作。 不正确地使用此选项可能会使资金面临永久损失的风险。 请参阅 xref:faq.adoc#delegatecall-selfdestruct[我可以安全地使用 `delegatecall` 和 `selfdestruct` 吗？]
+** `"missing-public-upgradeto"`：允许不包含公共 `upgradeTo` 或 `upgradeToAndCall` 函数的 UUPS 实现。 启用此选项很可能会由于内置 UUPS 安全机制而导致回退。
+* `unsafeAllowRenames`: (`boolean`) 配置存储布局检查以允许变量重命名。
+* `unsafeSkipStorageCheck`：(`boolean`) 升级代理或信标，而无需先检查存储布局兼容性错误。 这是一个危险的选项，旨在作为最后的手段使用。
+* `constructorArgs`：(`unknown[]`) 为实现合约的构造函数提供参数。 请注意，这些参数与初始化器参数不同，将用于部署实现合约本身。 可用于初始化不可变变量。
+* `redeployImplementation`：(`"always" | "never" | "onchange"`) 确定是否将重新部署实现合约。 默认为 `"onchange"`。
+** 如果设置为 `"always"`，则即使先前已使用相同的字节码部署了实现合约，也会始终重新部署该合约。
+** 如果设置为 `"never"`，则永远不会重新部署实现合约。 如果先前未部署实现合约或在网络文件中未找到实现合约，则将引发错误。
+** 如果设置为 `"onchange"`，则仅当字节码与之前的部署相比发生更改时，才会重新部署实现合约。
+* `txOverrides`：(`TruffleTxOptions`) 一个 Truffle https://trufflesuite.com/docs/truffle/how-to/contracts/run-migrations/#deployerdeploycontract-args-options[options] 对象，用于覆盖交易参数，例如 `gas` 和 `gasPrice`。 适用于此选项的函数发送的所有交易，即使该函数发送多个交易。
 
-Note that the options `unsafeAllow` can also be specified in a more granular way directly in the source code if using Solidity >=0.8.2. See xref:faq.adoc#how-can-i-disable-checks[How can I disable some of the checks?]
+请注意，如果使用 Solidity >=0.8.2，也可以直接在源代码中以更精细的方式指定选项 `unsafeAllow`。 请参阅 xref:faq.adoc#how-can-i-disable-checks[如何禁用某些检查？]
 
-The following options have been deprecated.
+以下选项已被弃用。
 
-* `unsafeAllowLinkedLibraries`: Equivalent to including `"external-library-linking"` in `unsafeAllow`.
-* `unsafeAllowCustomTypes`: Equivalent to including `"struct-definition"` and `"enum-definition"` in `unsafeAllow`. No longer necessary.
-* `useDeployedImplementation`: (`boolean`) Equivalent to setting `redeployImplementation` to `"never"`.
+* `unsafeAllowLinkedLibraries`：等效于在 `unsafeAllow` 中包含 `"external-library-linking"`。
+* `unsafeAllowCustomTypes`：等效于在 `unsafeAllow` 中包含 `"struct-definition"` 和 `"enum-definition"`。 现在不再需要。
+* `useDeployedImplementation`：(`boolean`) 等效于将 `redeployImplementation` 设置为 `"never"`。
 
 [[deploy-proxy]]
 == deployProxy
@@ -58,23 +58,23 @@ async function deployProxy(
 ): Promise<ContractInstance>
 ----
 
-Creates a UUPS or Transparent proxy given a Truffle contract class to use as implementation, and returns a contract instance with the proxy address and the implementation interface. During a migration, the proxy address will be stored in the implementation contract's artifact, so you can use Truffle's https://www.trufflesuite.com/docs/truffle/reference/contract-abstractions#-code-mycontract-deployed-code-[`deployed()`] function to load it.
+给定一个 Truffle 合约类以用作实现，创建一个 UUPS 或 Transparent 代理，并返回一个包含代理地址和实现接口的合约实例。 在迁移期间，代理地址将存储在实现合约的 artifact 中，因此您可以使用 Truffle 的 https://www.trufflesuite.com/docs/truffle/reference/contract-abstractions#-code-mycontract-deployed-code-[`deployed()`] 函数来加载它。
 
-If `args` is set, will call an initializer function `initialize` with the supplied `args` during proxy deployment.
+如果设置了 `args`，则将在代理部署期间使用提供的 `args` 调用初始化器函数 `initialize`。
 
-If you call `deployProxy` several times for the same implementation contract, several proxies will be deployed, but only one implementation contract will be used.
+如果您为同一实现合约多次调用 `deployProxy`，则将部署多个代理，但只会使用一个实现合约。
 
-*Parameters:*
+*参数：*
 
-* `Contract` - a Truffle contract class to use as the implementation.
-* `args` - arguments for the initializer function.
-* `opts` - an object with options:
-** `initializer`: set a different initializer function to call, or specify `false` to disable initialization
-** See <<common-options>>.
+* `Contract` - 用作实现的 Truffle 合约类。
+* `args` - 初始化器函数的参数。
+* `opts` - 包含选项的对象：
+** `initializer`：设置要调用的其他初始化器函数，或者指定 `false` 以禁用初始化
+** 见 <<common-options>>。
 
-*Returns:*
+*返回值：*
 
-* a contract instance with the proxy address and the implementation interface.
+* 包含代理地址和实现接口的合约实例。
 
 [[upgrade-proxy]]
 == upgradeProxy
@@ -100,19 +100,19 @@ async function upgradeProxy(
 ): Promise<ContractInstance>
 ----
 
-Upgrades a UUPS or Transparent proxy at a specified address to a new implementation contract, and returns a contract instance with the proxy address and the new implementation interface.
+将指定地址的 UUPS 或 Transparent 代理升级到新的实现合约，并返回一个包含代理地址和新实现接口的合约实例。
 
-*Parameters:*
+*参数：*
 
-* `proxy` - the proxy address or proxy contract instance.
-* `Contract` - a Truffle contract class to use as the new implementation.
-* `opts` - an object with options:
-** `call`: enables the execution of an arbitrary function call during the upgrade process. This call is described using a function name or signature and optional arguments. It is batched into the upgrade transaction, making it safe to call migration initializing functions.
-** See <<common-options>>.
+* `proxy` - 代理地址或代理合约实例。
+* `Contract` - 用作新实现的 Truffle 合约类。
+* `opts` - 包含选项的对象：
+** `call`：允许在升级过程中执行任意函数调用。 此调用使用函数名称或签名以及可选参数进行描述。 它被批量处理到升级交易中，从而可以安全地调用迁移初始化函数。
+** 见 <<common-options>>。
 
-*Returns:*
+*返回值：*
 
-* a contract instance with the proxy address and the new implementation interface.
+* 包含代理地址和新实现接口的合约实例。
 
 [[deploy-beacon]]
 == deployBeacon
@@ -133,19 +133,19 @@ async function deployBeacon(
 ): Promise<ContractInstance>
 ----
 
-Creates an https://docs.openzeppelin.com/contracts/4.x/api/proxy#UpgradeableBeacon[upgradable beacon] given a Truffle contract class to use as implementation, and returns the beacon contract instance.
+给定一个 Truffle 合约类以用作实现，创建一个 https://docs.openzeppelin.com/contracts/4.x/api/proxy#UpgradeableBeacon[可升级信标]，并返回信标合约实例。
 
-*Parameters:*
+*参数：*
 
-* `Contract` - a Truffle contract class to use as the implementation.
-* `opts` - an object with options:
-** See <<common-options>>.
+* `Contract` - 用作实现的 Truffle 合约类。
+* `opts` - 包含选项的对象：
+** 见 <<common-options>>。
 
-*Returns:*
+*返回值：*
 
-* the beacon contract instance.
+* 信标合约实例。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/truffle-upgrades@1.12.0`
 
@@ -171,20 +171,20 @@ async function upgradeBeacon(
 ): Promise<ContractInstance>
 ----
 
-Upgrades an https://docs.openzeppelin.com/contracts/4.x/api/proxy#UpgradeableBeacon[upgradable beacon] at a specified address to a new implementation contract, and returns the beacon contract instance.
+将指定地址的 https://docs.openzeppelin.com/contracts/4.x/api/proxy#UpgradeableBeacon[可升级信标] 升级到新的实现合约，并返回信标合约实例。
 
-*Parameters:*
+*参数：*
 
-* `beacon` - the beacon address or beacon contract instance.
-* `Contract` - a Truffle contract class to use as the new implementation.
-* `opts` - an object with options:
-** See <<common-options>>.
+* `beacon` - 信标地址或信标合约实例。
+* `Contract` - 用作新实现的 Truffle 合约类。
+* `opts` - 包含选项的对象：
+** 见 <<common-options>>。
 
-*Returns:*
+*返回值：*
 
-* the beacon contract instance.
+* 信标合约实例。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/truffle-upgrades@1.12.0`
 
@@ -205,21 +205,21 @@ async function deployBeaconProxy(
 ): Promise<ContractInstance>
 ----
 
-Creates a https://docs.openzeppelin.com/contracts/4.x/api/proxy#BeaconProxy[Beacon proxy] given an existing beacon contract address and a Truffle contract class corresponding to the beacon's current implementation contract, and returns a contract instance with the beacon proxy address and the implementation interface. If `args` is set, will call an initializer function `initialize` with the supplied args during proxy deployment.
+给定一个现有的信标合约地址和一个对应于信标当前实现合约的 Truffle 合约类，创建一个 https://docs.openzeppelin.com/contracts/4.x/api/proxy#BeaconProxy[Beacon 代理]，并返回一个包含信标代理地址和实现接口的合约实例。 如果设置了 `args`，则将在代理部署期间使用提供的参数调用初始化器函数 `initialize`。
 
-*Parameters:*
+*参数：*
 
-* `beacon` - the beacon address or beacon contract instance.
-* `attachTo` - a Truffle contract class corresponding to the beacon's current implementation contract.
-* `args` - arguments for the initializer function.
-* `opts` - an object with options:
-** `initializer`: set a different initializer function to call, or specify `false` to disable initialization
+* `beacon` - 信标地址或信标合约实例。
+* `attachTo` - 对应于信标当前实现合约的 Truffle 合约类。
+* `args` - 初始化器函数的参数。
+* `opts` - 包含选项的对象：
+** `initializer`：设置要调用的其他初始化器函数，或者指定 `false` 以禁用初始化
 
-*Returns:*
+*返回值：*
 
-* a contract instance with the beacon proxy address and the implementation interface.
+* 包含信标代理地址和实现接口的合约实例。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/truffle-upgrades@1.12.0`
 
@@ -237,24 +237,24 @@ async function forceImport(
 ): Promise<ContractInstance>
 ----
 
-Forces the import of an existing proxy, beacon, or implementation contract deployment to be used with this plugin. Provide the address of an existing proxy, beacon or implementation, along with the Truffle contract class of the implementation contract that was deployed.
+强制导入现有的代理、信标或实现合约部署以与此插件一起使用。 提供现有代理、信标或实现的地址，以及已部署的实现合约的 Truffle 合约类。
 
-CAUTION: When importing a proxy or beacon, the `deployedImpl` argument must be the contract class of the *current* implementation contract version that is being used, not the version that you are planning to upgrade to.
+CAUTION: 导入代理或信标时，`deployedImpl` 参数必须是要使用的*当前*实现合约版本的合约类，而不是您计划升级到的版本。
 
-Use this function to recreate a lost https://docs.openzeppelin.com/upgrades-plugins/1.x/network-files[network file] by importing previous deployments, or to register proxies or beacons for upgrading even if they were not originally deployed by this plugin. Supported for UUPS, Transparent, and Beacon proxies, as well as beacons and implementation contracts.
+通过导入先前的部署来重新创建丢失的 https://docs.openzeppelin.com/upgrades-plugins/1.x/network-files[网络文件]，或者注册代理或信标以进行升级，即使它们最初不是由此插件部署的。 支持 UUPS、Transparent 和 Beacon 代理，以及信标和实现合约。
 
-*Parameters:*
+*参数：*
 
-* `address` - the address of an existing proxy, beacon or implementation.
-* `deployedImpl` - the Truffle contract class of the implementation contract that was deployed.
-* `opts` - an object with options:
-** `kind`: (`"uups" | "transparent" | "beacon"`) forces a proxy to be treated as a UUPS, Transparent, or Beacon proxy. If not provided, the proxy kind will be automatically detected.
+* `address` - 现有代理、信标或实现的地址。
+* `deployedImpl` - 已部署的实现合约的 Truffle 合约类。
+* `opts` - 包含选项的对象：
+** `kind`：(`"uups" | "transparent" | "beacon"`) 强制将代理视为 UUPS、Transparent 或 Beacon 代理。 如果未提供，将自动检测代理类型。
 
-*Returns:*
+*返回值：*
 
-* a contract instance representing the imported proxy, beacon or implementation.
+* 表示导入的代理、信标或实现的合约实例。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/truffle-upgrades@1.13.0`
 
@@ -272,15 +272,15 @@ async function validateImplementation(
 ): Promise<void>
 ----
 
-Validates an implementation contract without deploying it.
+验证实现合约而不部署它。
 
-*Parameters:*
+*参数：*
 
-* `Contract` - the Truffle contract class of the implementation contract.
-* `opts` - an object with options:
-** See <<common-options>>.
+* `Contract` - 实现合约的 Truffle 合约类。
+* `opts` - 包含选项的对象：
+** 见 <<common-options>>。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/truffle-upgrades@1.16.0`
 
@@ -304,19 +304,19 @@ async function deployImplementation(
 ): Promise<string>
 ----
 
-Validates and deploys an implementation contract, and returns its address.
+验证并部署实现合约，并返回其地址。
 
-*Parameters:*
+*参数：*
 
-* `Contract` - a Truffle contract class to use as the implementation.
-* `opts` - an object with options:
-** See <<common-options>>.
+* `Contract` - 用作实现的 Truffle 合约类。
+* `opts` - 包含选项的对象：
+** 见 <<common-options>>。
 
-*Returns:*
+*返回值：*
 
-* the address of the implementation contract.
+* 实现合约的地址。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/truffle-upgrades@1.16.0`
 
@@ -337,22 +337,22 @@ async function validateUpgrade(
 ): Promise<void>
 ----
 
-Validates a new implementation contract without deploying it and without actually upgrading to it. Compares the current implementation contract to the new implementation contract to check for storage layout compatibility errors. If `referenceAddressOrContract` is the current implementation address, the `kind` option is required.
+验证新的实现合约，而无需部署它，也无需实际升级到它。 将当前的实现合约与新的实现合约进行比较，以检查存储布局兼容性错误。 如果 `referenceAddressOrContract` 是当前的实现地址，则需要 `kind` 选项。
 
-*Parameters:*
+*参数：*
 
-* `referenceAddressOrContract` - a proxy or beacon address that uses the current implementation, or an address or Truffle contract class corresponding to the current implementation.
-* `newContract` - the new implementation contract.
-* `opts` - an object with options:
-** See <<common-options>>.
+* `referenceAddressOrContract` - 使用当前实现的代理或信标地址，或者对应于当前实现的地址或 Truffle 合约类。
+* `newContract` - 新的实现合约。
+* `opts` - 包含选项的对象：
+** 见 <<common-options>>。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/truffle-upgrades@1.16.0`
 
-*Examples:*
+*示例：*
 
-Validate upgrading an existing proxy to a new contract (replace `PROXY_ADDRESS` with the address of your proxy):
+验证将现有代理升级到新合约（将 `PROXY_ADDRESS` 替换为您的代理地址）：
 [source,ts]
 ----
 const { validateUpgrade } = require('@openzeppelin/truffle-upgrades');
@@ -361,7 +361,7 @@ const BoxV2 = artifacts.require('BoxV2');
 await validateUpgrade(PROXY_ADDRESS, BoxV2);
 ----
 
-Validate upgrading between two contract implementations:
+验证在两个合约实现之间进行升级：
 [source,ts]
 ----
 const { validateUpgrade } = require('@openzeppelin/truffle-upgrades');
@@ -394,18 +394,18 @@ async function prepareUpgrade(
 ): Promise<string>
 ----
 
-Validates and deploys a new implementation contract, and returns its address. If `referenceAddressOrContract` is the current implementation address, the `kind` option is required. Use this method to prepare an upgrade to be run from an admin address you do not control directly or cannot use from Truffle.
+验证并部署新的实现合约，并返回其地址。 如果 `referenceAddressOrContract` 是当前的实现地址，则需要 `kind` 选项。 使用此方法准备从您不直接控制或无法从 Truffle 使用的管理地址运行的升级。
 
-*Parameters:*
+*参数：*
 
-* `referenceAddressOrContract` - the proxy or beacon or implementation address or contract instance.
-* `Contract` - the new implementation contract.
-* `opts` - an object with options:
-** See <<common-options>>.
+* `referenceAddressOrContract` - 代理或信标或实现地址或合约实例。
+* `Contract` - 新的实现合约。
+* `opts` - 包含选项的对象：
+** 见 <<common-options>>。
 
-*Returns:*
+*返回值：*
 
-* the address of the new implementation contract.
+* 新的实现合约的地址。
 
 [[deploy-proxy-admin]]
 == deployProxyAdmin
@@ -422,18 +422,18 @@ async function deployProxyAdmin(
 ): Promise<string>
 ----
 
-Deploys a https://docs.openzeppelin.com/contracts/4.x/api/proxy#ProxyAdmin[proxy admin] contract and returns its address if one was not already deployed on the current network, or just returns the address of the proxy admin if one was already deployed. Note that this plugin currently only supports using one proxy admin per network.
+部署 https://docs.openzeppelin.com/contracts/4.x/api/proxy#ProxyAdmin[代理管理员] 合约并返回其地址（如果当前网络上尚未部署），或者仅返回代理管理员的地址（如果已部署）。 请注意，此插件当前仅支持每个网络使用一个代理管理员。
 
-*Parameters:*
+*参数：*
 
-* `opts` - an object with options:
-** See <<common-options>>.
+* `opts` - 包含选项的对象：
+** 见 <<common-options>>。
 
-*Returns:*
+*返回值：*
 
-* the address of the proxy admin.
+* 代理管理员的地址。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/truffle-upgrades@1.16.0`
 
@@ -452,14 +452,14 @@ async function changeProxyAdmin(
 ): Promise<void>
 ----
 
-Changes the admin for a specific proxy.
+更改特定代理的管理员。
 
-*Parameters:*
+*参数：*
 
-* `proxyAddress` - the address of the proxy to change.
-* `newAdmin` - the new admin address.
-* `opts` - an object with options:
-** See <<common-options>>.
+* `proxyAddress` - 要更改的代理的地址。
+* `newAdmin` - 新的管理员地址。
+* `opts` - 包含选项的对象：
+** 见 <<common-options>>。
 
 [[admin-transfer-proxy-admin-ownership]]
 == admin.transferProxyAdminOwnership
@@ -476,13 +476,13 @@ async function transferProxyAdminOwnership(
 ): Promise<void>
 ----
 
-Changes the owner of the proxy admin contract, which is the default admin for upgrade rights over all proxies.
+更改代理管理员合约的所有者，该所有者是对所有代理的升级权限的默认管理员。
 
-*Parameters:*
+*参数：*
 
-* `newAdmin` - the new admin address.
-* `opts` - an object with options:
-** See <<common-options>>.
+* `newAdmin` - 新的管理员地址。
+* `opts` - 包含选项的对象：
+** 见 <<common-options>>。
 
 [[erc1967]]
 == erc1967
@@ -494,15 +494,15 @@ async function erc1967.getBeaconAddress(proxyAddress: string): Promise<string>;
 async function erc1967.getAdminAddress(proxyAddress: string): Promise<string>;
 ----
 
-Functions in this module provide access to the https://eips.ethereum.org/EIPS/eip-1967[ERC1967] variables of a proxy contract.
+此模块中的函数提供对代理合约的 https://eips.ethereum.org/EIPS/eip-1967[ERC1967] 变量的访问。
 
-*Parameters:*
+*参数：*
 
-* `proxyAddress` - the proxy address.
+* `proxyAddress` - 代理地址。
 
-*Returns:*
+*返回值：*
 
-* the implementation, beacon, or admin address depending on the function called.
+* 实现、信标或管理员地址取决于调用的函数。
 
 [[beacon]]
 == beacon
@@ -512,17 +512,17 @@ Functions in this module provide access to the https://eips.ethereum.org/EIPS/ei
 async function beacon.getImplementationAddress(beaconAddress: string): Promise<string>;
 ----
 
-This module provides a convenience function to get the implementation address from a beacon contract.
+此模块提供了一个便捷函数，用于从信标合约获取实现地址。
 
-*Parameters:*
+*参数：*
 
-* `beaconAddress` - the beacon address.
+* `beaconAddress` - 信标地址。
 
-*Returns:*
+*返回值：*
 
-* the implementation address.
+* 实现地址。
 
-*Since:*
+*始于：*
 
 * `@openzeppelin/truffle-upgrades@1.12.0`
 
@@ -533,6 +533,6 @@ This module provides a convenience function to get the implementation address fr
 function silenceWarnings()
 ----
 
-NOTE: This function is useful for tests, but its use in production deployment scripts is discouraged.
+NOTE: 此函数对于测试很有用，但不鼓励在生产部署脚本中使用。
 
-Silences all subsequent warnings about the use of unsafe flags. Prints a last warning before doing so.
+禁止所有后续关于使用不安全标志的警告。 在这样做之前，会打印最后一个警告。

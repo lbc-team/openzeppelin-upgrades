@@ -1,13 +1,13 @@
-= Network Files
+= 网络文件
 
-OpenZeppelin Hardhat Upgrades, by default, keeps track of all the contract versions you have deployed in an `.openzeppelin` folder in the project root. You will find one file per network there. It is advised that you commit to source control the files for all networks except the development ones (you may see them as `.openzeppelin/unknown-*.json`).
+OpenZeppelin Hardhat Upgrades 默认会跟踪你部署的所有合约版本，并将其保存在项目根目录下的 `.openzeppelin` 文件夹中。你会在那里找到每个网络对应的一个文件。建议你将除开发网络之外的所有网络的文件提交到源代码控制中（你可能会看到它们为 `.openzeppelin/unknown-*.json`）。
 
-NOTE: The format of the files within the `.openzeppelin` folder is not compatible with those of the xref:cli::index.adoc[OpenZeppelin CLI]. If you want to use these plugins for an existing OpenZeppelin CLI project, you have to migrate it first. See xref:migrate-from-cli.adoc[Migrate from CLI] for instructions.
+NOTE: `.openzeppelin` 文件夹中文件的格式与 xref:cli::index.adoc[OpenZeppelin CLI] 的格式不兼容。 如果你想将这些插件用于现有的 OpenZeppelin CLI 项目，你必须先迁移它。 有关说明，请参阅 xref:migrate-from-cli.adoc[从 CLI 迁移]。
 
 [[network.json]]
 == `<network_name>.json`
 
-OpenZeppelin Hardhat Upgrades will generate a file for each of the networks you work on (`mainnet`, `sepolia`, etc.). These files share the same structure:
+OpenZeppelin Hardhat Upgrades 将为你工作的每个网络（`mainnet`、`sepolia` 等）生成一个文件。 这些文件具有相同的结构：
 
 [source,json]
 ----
@@ -35,39 +35,39 @@ OpenZeppelin Hardhat Upgrades will generate a file for each of the networks you 
 }
 ----
 
-For every logic contract, besides the deployment address, the following info is also tracked:
+对于每个逻辑合约，除了部署地址之外，还会跟踪以下信息：
 
-* `types` keeps track of all the types used in the contract or its ancestors, from basic types like `uint256` to custom `struct` types
-* `storage` tracks the storage layout of the linearized contract, referencing the types defined in the `types` section, and is used for verifying that any xref:faq.adoc#what-does-it-mean-for-an-implementation-to-be-compatible[storage layout changes between subsequent versions are compatible] 
+* `types` 跟踪合约或其祖先中使用的所有类型，从 `uint256` 等基本类型到自定义 `struct` 类型
+* `storage` 跟踪线性化合约的存储布局，引用 `types` 部分中定义的类型，并用于验证任何 xref:faq.adoc#what-does-it-mean-for-an-implementation-to-be-compatible[后续版本之间的存储布局更改是否兼容]
 
-The naming of the file will be `<network_name>.json`, but note that `<network_name>` is not taken from the name of the network's entry in the Hardhat configuration file, but is instead inferred from the chain id associated to the entry.
+文件的命名将是 `<network_name>.json`，但请注意 `<network_name>` 不是从 Hardhat 配置文件中网络的条目名称中获取的，而是从与该条目关联的链 ID 推断出来的。
 
-There is a limited set of public chains; Chains not on the list such as Ethereum Classic will have network files named `unknown-<chain_id>.json`.
+公共链的数量有限； 未在列表中的链（例如 Ethereum Classic）将具有名为 `unknown-<chain_id>.json` 的网络文件。
 
 [[configuration-files-in-version-control]]
-== Configuration Files in Version Control
+== 版本控制中的配置文件
 
-Public network files like `mainnet.json` or `sepolia.json` should be tracked in version control. These contain valuable information about your project's status in the corresponding network, like the addresses of the contract versions that have been deployed. Such files should be identical for all the contributors of a project.
+应该在版本控制中跟踪公共网络文件，例如 `mainnet.json` 或 `sepolia.json`。 这些文件包含有关项目在相应网络中的状态的宝贵信息，例如已部署的合约版本的地址。 对于项目的所有贡献者来说，这些文件应该是相同的。
 
-Network files may also appear as `unknown-<chain_id>.json` if the network name is not known to the Hardhat plugin. If the chain ID corresponds to a public network, then it should also be tracked in version control. However, if the chain ID is for a temporary local network such as a development network, then it is only relevant to a single contributor of the project and should not be tracked in version control.
+如果 Hardhat 插件不知道网络名称，网络文件也可能显示为 `unknown-<chain_id>.json`。 如果链 ID 对应于公共网络，那么也应该在版本控制中对其进行跟踪。 但是，如果链 ID 用于临时本地网络（例如开发网络），那么它仅与项目的单个贡献者相关，并且不应在版本控制中进行跟踪。
 
 [[temporary-files]]
-== Temporary Files
+== 临时文件
 
-Hardhat development networks using Hardhat version 2.12.3 or later, and Anvil development networks connected from Hardhat, will have network files written to an `openzeppelin-upgrades` folder under the operating system's temporary directory. These files are named `hardhat-<chain_id>-<instance_id>.json` or `anvil-<chain_id>-<instance_id>.json`, where `<instance_id>` is a 0x-prefixed hex id that uniquely identifies an instance/run of the Hardhat or Anvil network. Files in this temporary folder can be safely deleted when their corresponding Hardhat or Anvil network instance is no longer active, for example after testing is finished.
+使用 Hardhat 2.12.3 或更高版本的 Hardhat 开发网络，以及从 Hardhat 连接的 Anvil 开发网络，会将网络文件写入操作系统临时目录下的 `openzeppelin-upgrades` 文件夹中。 这些文件名为 `hardhat-<chain_id>-<instance_id>.json` 或 `anvil-<chain_id>-<instance_id>.json`，其中 `<instance_id>` 是一个以 0x 为前缀的十六进制 ID，用于唯一标识 Hardhat 或 Anvil 网络的实例/运行。 当相应的 Hardhat 或 Anvil 网络实例不再处于活动状态时（例如在测试完成后），可以安全地删除此临时文件夹中的文件。
 
-You can determine the location of a temporary network file by doing the following:
+你可以通过执行以下操作来确定临时网络文件的位置：
 
-. Run `export DEBUG=@openzeppelin:*` to enable debug logging.
-. Run your Hardhat test or script.
-. Find the log message containing the text `development manifest file:`.
+. 运行 `export DEBUG=@openzeppelin:*` 以启用调试日志记录。
+. 运行你的 Hardhat 测试或脚本。
+. 找到包含文本 `development manifest file:` 的日志消息。
 
 [[custom-network-files-location]]
-== Custom Network Files Location
+== 自定义网络文件位置
 
-To customize the location of the `.openzeppelin` folder, set the `MANIFEST_DEFAULT_DIR` environment variable to an absolute path or a path relative to the root of your project. This variable allows you to specify different directories for storing network files, enabling you to deploy the same contracts to the same networks for different environments without conflicts. This can be used with private networks to avoid chain ID conflicts.
+要自定义 `.openzeppelin` 文件夹的位置，请将 `MANIFEST_DEFAULT_DIR` 环境变量设置为绝对路径或相对于项目根目录的路径。 此变量允许你指定不同的目录来存储网络文件，使你能够在不同环境中将相同的合约部署到相同的网络而不会发生冲突。 这可以与专用网络一起使用，以避免链 ID 冲突。
 
-For example:
+例如：
 
-* Run `export MANIFEST_DEFAULT_DIR=.openzeppelin/tests` to configure OpenZeppelin Hardhat Upgrades to use `.openzeppelin/tests/<network_name>.json` for test deployments.
-* Run `export MANIFEST_DEFAULT_DIR=.openzeppelin/production` to configure OpenZeppelin Hardhat Upgrades to use `.openzeppelin/production/<network_name>.json` for production deployments.
+* 运行 `export MANIFEST_DEFAULT_DIR=.openzeppelin/tests` 以将 OpenZeppelin Hardhat Upgrades 配置为使用 `.openzeppelin/tests/<network_name>.json` 进行测试部署。
+* 运行 `export MANIFEST_DEFAULT_DIR=.openzeppelin/production` 以将 OpenZeppelin Hardhat Upgrades 配置为使用 `.openzeppelin/production/<network_name>.json` 进行生产部署。

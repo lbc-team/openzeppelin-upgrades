@@ -1,1 +1,144 @@
-include::foundry/pages/foundry-defender.adoc[]
+:page-title: 使用 Defender 部署并验证到 Foundry
+
+本指南将向您展示如何使用 Defender 部署代理合约并验证到 Foundry 项目。
+
+== 前提条件
+
+*   一个 Defender 团队.
+*   Defender API 密钥和机密。 参见 <<defender-api-keys, Defender API 密钥>>。
+*   已安装 Foundry。 参见 link:https://book.getfoundry.sh/[Foundry Book]。
+
+== 设置
+
+首先，使用以下命令创建一个新的 Foundry 项目：
+
+[source,bash]
+----
+forge init
+----
+
+然后，将以下依赖项添加到您的 `foundry.toml` 文件中：
+
+[source,toml]
+----
+[dependencies]
+openzeppelin-contracts = "npm:@openzeppelin/contracts@4.9.3"
+openzeppelin-contracts-upgradeable = "npm:@openzeppelin/contracts-upgradeable@4.9.3"
+openzeppelin-defender = "npm:@openzeppelin/defender-foundry@1.5.0"
+----
+
+之后，运行以下命令来安装依赖项：
+
+[source,bash]
+----
+forge install
+----
+
+== 创建一个简单的可升级合约
+
+创建一个名为 `contracts/MyContract.sol` 的新文件，其中包含以下内容：
+
+[source,solidity]
+----
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
+contract MyContract is Initializable, OwnableUpgradeable {
+    uint256 private _value;
+
+    function initialize() public initializer {
+        __Ownable_init();
+    }
+
+    function setValue(uint256 value) public onlyOwner {
+        _value = value;
+    }
+
+    function getValue() public view returns (uint256) {
+        return _value;
+    }
+}
+----
+
+== 创建一个部署脚本
+
+创建一个名为 `script/Deploy.s.sol` 的新文件，其中包含以下内容：
+
+[source,solidity]
+----
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
+
+import "forge-std/Script.sol";
+import {MyContract} from "../contracts/MyContract.sol";
+import {DefenderDeploy} from "openzeppelin-defender/src/foundry/DefenderDeploy.sol";
+
+contract Deploy is Script {
+    function setUp() public {}
+
+    function run() public {
+        // 替换为您的 Defender API 密钥和机密。
+        string memory defenderApiKey = vm.envString("DEFENDER_API_KEY");
+        string memory defenderApiSecret = vm.envString("DEFENDER_API_SECRET");
+
+        // 替换为您的以太坊 RPC URL。
+        string memory rpcUrl = vm.envString("ETHEREUM_RPC_URL");
+
+        // 替换为您的私钥。
+        uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+
+        // 创建 DefenderDeploy 实例。
+        DefenderDeploy deployer = new DefenderDeploy(defenderApiKey, defenderApiSecret, rpcUrl);
+
+        // 设置部署者。
+        vm.startBroadcast(deployerPrivateKey);
+
+        // 部署合约。
+        MyContract myContract = deployer.deployAndInitialize(MyContract, [address(this)]);
+
+        // 验证合约。
+        deployer.verify(address(myContract));
+
+        vm.stopBroadcast();
+    }
+}
+----
+
+确保将 `DEFENDER_API_KEY`、`DEFENDER_API_SECRET`、`ETHEREUM_RPC_URL` 和 `DEPLOYER_PRIVATE_KEY` 环境变量设置为您的实际值。
+
+您可以使用 `export` 命令设置环境变量：
+
+[source,bash]
+----
+export DEFENDER_API_KEY=<YOUR_DEFENDER_API_KEY>
+export DEFENDER_API_SECRET=<YOUR_DEFENDER_API_SECRET>
+export ETHEREUM_RPC_URL=<YOUR_ETHEREUM_RPC_URL>
+export DEPLOYER_PRIVATE_KEY=<YOUR_DEPLOYER_PRIVATE_KEY>
+----
+
+== 运行部署脚本
+
+使用以下命令运行部署脚本：
+
+[source,bash]
+----
+forge script script/Deploy.s.sol --broadcast --verify
+----
+
+这将部署您的合约并通过 Defender 验证它。
+
+NOTE: 首次运行此命令时，您可能会收到一个错误，指出 etherscan API 密钥未设置。 如果发生这种情况，您需要将 `ETHERSCAN_API_KEY` 环境变量设置为您的实际值。
+您可以在 link:https://etherscan.io/apis[Etherscan 网站] 上获取 Etherscan API 密钥。
+
+[source,bash]
+----
+export ETHERSCAN_API_KEY=<YOUR_ETHERSCAN_API_KEY>
+----
+
+== 后续步骤
+
+*   阅读 link:https://docs.openzeppelin.com/defender/[Defender 文档] 以了解有关 Defender 的更多信息。
+*   了解有关 link:https://docs.openzeppelin.com/contracts/4.x/upgradeable[可升级合约] 的更多信息。

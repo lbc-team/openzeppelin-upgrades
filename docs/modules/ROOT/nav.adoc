@@ -1,12 +1,12 @@
-* xref:index.adoc[Overview]
-* xref:hardhat-upgrades.adoc[Using with Hardhat]
-** xref:network-files.adoc[Network Files]
-* xref:foundry-upgrades.adoc[Using with Foundry]
-* xref:writing-upgradeable.adoc[Writing Upgradeable Contracts]
-* xref:proxies.adoc[Proxy Upgrade Pattern]
-* xref:faq.adoc[Frequently Asked Questions]
+* xref:index.adoc[概述]
+* xref:hardhat-upgrades.adoc[与 Hardhat 一起使用]
+** xref:network-files.adoc[网络文件]
+* xref:foundry-upgrades.adoc[与 Foundry 一起使用]
+* xref:writing-upgradeable.adoc[编写可升级的合约]
+* xref:proxies.adoc[代理升级模式]
+* xref:faq.adoc[常见问题解答]
 
-.API Reference
+.API 参考
 * xref:api-hardhat-upgrades.adoc[Hardhat Upgrades API]
 * xref:api-foundry-upgrades.adoc[Foundry Upgrades API]
 * xref:api-core.adoc[Upgrades Core & CLI]
