@@ -1,3 +1,5 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+
 [[Options-Options]]
 === `++Options++` link:https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades/blob/main/src/Options.sol[{github-icon},role=heading-link]
 

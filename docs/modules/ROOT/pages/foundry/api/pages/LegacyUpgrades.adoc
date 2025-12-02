@@ -42,13 +42,13 @@
 import { Upgrades } from "openzeppelin-foundry-upgrades/LegacyUpgrades.sol";
 ```
 
-用于从 Forge 脚本或测试中管理可升级合约的库。
+Library for managing upgradeable contracts from Forge scripts or tests.
 
-注意：仅用于使用 OpenZeppelin Contracts v4 升级现有部署。
-对于新的部署，请使用 OpenZeppelin Contracts v5 和 Upgrades.sol。
+NOTE: Only for upgrading existing deployments using OpenZeppelin Contracts v4.
+For new deployments, use OpenZeppelin Contracts v5 and Upgrades.sol.
 
 [.contract-index]
-.函数
+.Functions
 --
 * {xref-LegacyUpgrades-Upgrades-upgradeProxy-address-string-bytes-struct-Options-}[`++upgradeProxy(proxy, contractName, data, opts)++`]
 * {xref-LegacyUpgrades-Upgrades-upgradeProxy-address-string-bytes-}[`++upgradeProxy(proxy, contractName, data)++`]
@@ -70,212 +70,212 @@ import { Upgrades } from "openzeppelin-foundry-upgrades/LegacyUpgrades.sol";
 [[LegacyUpgrades-Upgrades-upgradeProxy-address-string-bytes-struct-Options-]]
 ==== `[.contract-item-name]#++upgradeProxy++#++(address proxy, string contractName, bytes data, struct Options opts)++` [.item-kind]#internal#
 
-将代理升级到新的实现合约。仅支持 UUPS 或透明代理。
+Upgrades a proxy to a new implementation contract. Only supported for UUPS or transparent proxies.
 
-要求设置 `referenceContract` 选项，或者新的实现合约具有 `@custom:oz-upgrades-from <reference>` 注释。
+Requires that either the `referenceContract` option is set, or the new implementation contract has a `@custom:oz-upgrades-from <reference>` annotation.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 要升级的代理的地址
-* `contractName` (`string`) - 要升级到的新实现合约的名称，例如 "MyContract.sol" 或 "MyContract.sol:MyContract" 或相对于项目根目录的 artifact 路径
-* `data` (`bytes`) - 在升级过程中要调用的任意函数的编码调用数据，如果升级过程中不需要调用任何函数，则为空
-* `opts` (`struct Options`) - 常用选项
+* `proxy` (`address`) - Address of the proxy to upgrade
+* `contractName` (`string`) - Name of the new implementation contract to upgrade to, e.g. "MyContract.sol" or "MyContract.sol:MyContract" or artifact path relative to the project root directory
+* `data` (`bytes`) - Encoded call data of an arbitrary function to call during the upgrade process, or empty if no function needs to be called during the upgrade
+* `opts` (`struct Options`) - Common options
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-upgradeProxy-address-string-bytes-]]
 ==== `[.contract-item-name]#++upgradeProxy++#++(address proxy, string contractName, bytes data)++` [.item-kind]#internal#
 
-将代理升级到新的实现合约。仅支持 UUPS 或透明代理。
+Upgrades a proxy to a new implementation contract. Only supported for UUPS or transparent proxies.
 
-要求设置 `referenceContract` 选项，或者新的实现合约具有 `@custom:oz-upgrades-from <reference>` 注释。
+Requires that either the `referenceContract` option is set, or the new implementation contract has a `@custom:oz-upgrades-from <reference>` annotation.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 要升级的代理的地址
-* `contractName` (`string`) - 要升级到的新实现合约的名称，例如 "MyContract.sol" 或 "MyContract.sol:MyContract" 或相对于项目根目录的 artifact 路径
-* `data` (`bytes`) - 在升级过程中要调用的任意函数的编码调用数据，如果升级过程中不需要调用任何函数，则为空
+* `proxy` (`address`) - Address of the proxy to upgrade
+* `contractName` (`string`) - Name of the new implementation contract to upgrade to, e.g. "MyContract.sol" or "MyContract.sol:MyContract" or artifact path relative to the project root directory
+* `data` (`bytes`) - Encoded call data of an arbitrary function to call during the upgrade process, or empty if no function needs to be called during the upgrade
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-upgradeProxy-address-string-bytes-struct-Options-address-]]
 ==== `[.contract-item-name]#++upgradeProxy++#++(address proxy, string contractName, bytes data, struct Options opts, address tryCaller)++` [.item-kind]#internal#
 
-注意：仅用于测试。如果在脚本中广播，请使用带有 `forge script` 的 `--sender <ADDRESS>` 选项代替。
+NOTE: For tests only. If broadcasting in scripts, use the `--sender <ADDRESS>` option with `forge script` instead.
 
-将代理升级到新的实现合约。仅支持 UUPS 或透明代理。
+Upgrades a proxy to a new implementation contract. Only supported for UUPS or transparent proxies.
 
-要求设置 `referenceContract` 选项，或者新的实现合约具有 `@custom:oz-upgrades-from <reference>` 注释。
+Requires that either the `referenceContract` option is set, or the new implementation contract has a `@custom:oz-upgrades-from <reference>` annotation.
 
-此函数提供了一个额外的 `tryCaller` 参数，用于使用特定的调用者地址测试升级。
-如果在测试中遇到 `OwnableUnauthorizedAccount` 错误，请使用此选项。
+This function provides an additional `tryCaller` parameter to test an upgrade using a specific caller address.
+Use this if you encounter `OwnableUnauthorizedAccount` errors in your tests.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 要升级的代理的地址
-* `contractName` (`string`) - 要升级到的新实现合约的名称，例如 "MyContract.sol" 或 "MyContract.sol:MyContract" 或相对于项目根目录的 artifact 路径
-* `data` (`bytes`) - 在升级过程中要调用的任意函数的编码调用数据，如果升级过程中不需要调用任何函数，则为空
-* `opts` (`struct Options`) - 常用选项
-* `tryCaller` (`address`) - 用作升级函数调用者的地址。这应该是拥有代理或其 ProxyAdmin 的地址。
+* `proxy` (`address`) - Address of the proxy to upgrade
+* `contractName` (`string`) - Name of the new implementation contract to upgrade to, e.g. "MyContract.sol" or "MyContract.sol:MyContract" or artifact path relative to the project root directory
+* `data` (`bytes`) - Encoded call data of an arbitrary function to call during the upgrade process, or empty if no function needs to be called during the upgrade
+* `opts` (`struct Options`) - Common options
+* `tryCaller` (`address`) - Address to use as the caller of the upgrade function. This should be the address that owns the proxy or its ProxyAdmin.
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-upgradeProxy-address-string-bytes-address-]]
 ==== `[.contract-item-name]#++upgradeProxy++#++(address proxy, string contractName, bytes data, address tryCaller)++` [.item-kind]#internal#
 
-注意：仅用于测试。如果在脚本中广播，请使用带有 `forge script` 的 `--sender <ADDRESS>` 选项代替。
+NOTE: For tests only. If broadcasting in scripts, use the `--sender <ADDRESS>` option with `forge script` instead.
 
-将代理升级到新的实现合约。仅支持 UUPS 或透明代理。
+Upgrades a proxy to a new implementation contract. Only supported for UUPS or transparent proxies.
 
-要求设置 `referenceContract` 选项，或者新的实现合约具有 `@custom:oz-upgrades-from <reference>` 注释。
+Requires that either the `referenceContract` option is set, or the new implementation contract has a `@custom:oz-upgrades-from <reference>` annotation.
 
-此函数提供了一个额外的 `tryCaller` 参数，用于使用特定的调用者地址测试升级。
-如果在测试中遇到 `OwnableUnauthorizedAccount` 错误，请使用此选项。
+This function provides an additional `tryCaller` parameter to test an upgrade using a specific caller address.
+Use this if you encounter `OwnableUnauthorizedAccount` errors in your tests.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 要升级的代理的地址
-* `contractName` (`string`) - 要升级到的新实现合约的名称，例如 "MyContract.sol" 或 "MyContract.sol:MyContract" 或相对于项目根目录的 artifact 路径
-* `data` (`bytes`) - 在升级过程中要调用的任意函数的编码调用数据，如果升级过程中不需要调用任何函数，则为空
-* `tryCaller` (`address`) - 用作升级函数调用者的地址。这应该是拥有代理或其 ProxyAdmin 的地址。
+* `proxy` (`address`) - Address of the proxy to upgrade
+* `contractName` (`string`) - Name of the new implementation contract to upgrade to, e.g. "MyContract.sol" or "MyContract.sol:MyContract" or artifact path relative to the project root directory
+* `data` (`bytes`) - Encoded call data of an arbitrary function to call during the upgrade process, or empty if no function needs to be called during the upgrade
+* `tryCaller` (`address`) - Address to use as the caller of the upgrade function. This should be the address that owns the proxy or its ProxyAdmin.
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-upgradeBeacon-address-string-struct-Options-]]
 ==== `[.contract-item-name]#++upgradeBeacon++#++(address beacon, string contractName, struct Options opts)++` [.item-kind]#internal#
 
-将信标升级到新的实现合约。
+Upgrades a beacon to a new implementation contract.
 
-要求设置 `referenceContract` 选项，或者新的实现合约具有 `@custom:oz-upgrades-from <reference>` 注释。
+Requires that either the `referenceContract` option is set, or the new implementation contract has a `@custom:oz-upgrades-from <reference>` annotation.
 
-*参数：*
+*Parameters:*
 
-* `beacon` (`address`) - 要升级的信标的地址
-* `contractName` (`string`) - 要升级到的新实现合约的名称，例如 "MyContract.sol" 或 "MyContract.sol:MyContract" 或相对于项目根目录的 artifact 路径
-* `opts` (`struct Options`) - 常用选项
+* `beacon` (`address`) - Address of the beacon to upgrade
+* `contractName` (`string`) - Name of the new implementation contract to upgrade to, e.g. "MyContract.sol" or "MyContract.sol:MyContract" or artifact path relative to the project root directory
+* `opts` (`struct Options`) - Common options
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-upgradeBeacon-address-string-]]
 ==== `[.contract-item-name]#++upgradeBeacon++#++(address beacon, string contractName)++` [.item-kind]#internal#
 
-将信标升级到新的实现合约。
+Upgrades a beacon to a new implementation contract.
 
-要求设置 `referenceContract` 选项，或者新的实现合约具有 `@custom:oz-upgrades-from <reference>` 注释。
+Requires that either the `referenceContract` option is set, or the new implementation contract has a `@custom:oz-upgrades-from <reference>` annotation.
 
-*参数：*
+*Parameters:*
 
-* `beacon` (`address`) - 要升级的信标的地址
-* `contractName` (`string`) - 要升级到的新实现合约的名称，例如 "MyContract.sol" 或 "MyContract.sol:MyContract" 或相对于项目根目录的 artifact 路径
+* `beacon` (`address`) - Address of the beacon to upgrade
+* `contractName` (`string`) - Name of the new implementation contract to upgrade to, e.g. "MyContract.sol" or "MyContract.sol:MyContract" or artifact path relative to the project root directory
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-upgradeBeacon-address-string-struct-Options-address-]]
 ==== `[.contract-item-name]#++upgradeBeacon++#++(address beacon, string contractName, struct Options opts, address tryCaller)++` [.item-kind]#internal#
 
-注意：仅用于测试。如果在脚本中广播，请使用带有 `forge script` 的 `--sender <ADDRESS>` 选项代替。
+NOTE: For tests only. If broadcasting in scripts, use the `--sender <ADDRESS>` option with `forge script` instead.
 
-将信标升级到新的实现合约。
+Upgrades a beacon to a new implementation contract.
 
-要求设置 `referenceContract` 选项，或者新的实现合约具有 `@custom:oz-upgrades-from <reference>` 注释。
+Requires that either the `referenceContract` option is set, or the new implementation contract has a `@custom:oz-upgrades-from <reference>` annotation.
 
-此函数提供了一个额外的 `tryCaller` 参数，用于使用特定的调用者地址测试升级。
-如果在测试中遇到 `OwnableUnauthorizedAccount` 错误，请使用此选项。
+This function provides an additional `tryCaller` parameter to test an upgrade using a specific caller address.
+Use this if you encounter `OwnableUnauthorizedAccount` errors in your tests.
 
-*参数：*
+*Parameters:*
 
-* `beacon` (`address`) - 要升级的信标的地址
-* `contractName` (`string`) - 要升级到的新实现合约的名称，例如 "MyContract.sol" 或 "MyContract.sol:MyContract" 或相对于项目根目录的 artifact 路径
-* `opts` (`struct Options`) - 常用选项
-* `tryCaller` (`address`) - 用作升级函数调用者的地址。这应该是拥有信标的地址。
+* `beacon` (`address`) - Address of the beacon to upgrade
+* `contractName` (`string`) - Name of the new implementation contract to upgrade to, e.g. "MyContract.sol" or "MyContract.sol:MyContract" or artifact path relative to the project root directory
+* `opts` (`struct Options`) - Common options
+* `tryCaller` (`address`) - Address to use as the caller of the upgrade function. This should be the address that owns the beacon.
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-upgradeBeacon-address-string-address-]]
 ==== `[.contract-item-name]#++upgradeBeacon++#++(address beacon, string contractName, address tryCaller)++` [.item-kind]#internal#
 
-注意：仅用于测试。如果在脚本中广播，请使用带有 `forge script` 的 `--sender <ADDRESS>` 选项代替。
+NOTE: For tests only. If broadcasting in scripts, use the `--sender <ADDRESS>` option with `forge script` instead.
 
-将信标升级到新的实现合约。
+Upgrades a beacon to a new implementation contract.
 
-要求设置 `referenceContract` 选项，或者新的实现合约具有 `@custom:oz-upgrades-from <reference>` 注释。
+Requires that either the `referenceContract` option is set, or the new implementation contract has a `@custom:oz-upgrades-from <reference>` annotation.
 
-此函数提供了一个额外的 `tryCaller` 参数，用于使用特定的调用者地址测试升级。
-如果在测试中遇到 `OwnableUnauthorizedAccount` 错误，请使用此选项。
+This function provides an additional `tryCaller` parameter to test an upgrade using a specific caller address.
+Use this if you encounter `OwnableUnauthorizedAccount` errors in your tests.
 
-*参数：*
+*Parameters:*
 
-* `beacon` (`address`) - 要升级的信标的地址
-* `contractName` (`string`) - 要升级到的新实现合约的名称，例如 "MyContract.sol" 或 "MyContract.sol:MyContract" 或相对于项目根目录的 artifact 路径
-* `tryCaller` (`address`) - 用作升级函数调用者的地址。这应该是拥有信标的地址。
+* `beacon` (`address`) - Address of the beacon to upgrade
+* `contractName` (`string`) - Name of the new implementation contract to upgrade to, e.g. "MyContract.sol" or "MyContract.sol:MyContract" or artifact path relative to the project root directory
+* `tryCaller` (`address`) - Address to use as the caller of the upgrade function. This should be the address that owns the beacon.
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-validateUpgrade-string-struct-Options-]]
 ==== `[.contract-item-name]#++validateUpgrade++#++(string contractName, struct Options opts)++` [.item-kind]#internal#
 
-比较新的实现合约与引用合约来验证它，但不部署它。
+Validates a new implementation contract in comparison with a reference contract, but does not deploy it.
 
-要求设置 `referenceContract` 选项，或者合约具有 `@custom:oz-upgrades-from <reference>` 注释。
+Requires that either the `referenceContract` option is set, or the contract has a `@custom:oz-upgrades-from <reference>` annotation.
 
-*参数：*
+*Parameters:*
 
-* `contractName` (`string`) - 要验证的合约的名称，例如 "MyContract.sol" 或 "MyContract.sol:MyContract" 或相对于项目根目录的 artifact 路径
-* `opts` (`struct Options`) - 常用选项
+* `contractName` (`string`) - Name of the contract to validate, e.g. "MyContract.sol" or "MyContract.sol:MyContract" or artifact path relative to the project root directory
+* `opts` (`struct Options`) - Common options
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-prepareUpgrade-string-struct-Options-]]
 ==== `[.contract-item-name]#++prepareUpgrade++#++(string contractName, struct Options opts) → address++` [.item-kind]#internal#
 
-比较新的实现合约与引用合约来验证它，部署新的实现合约，
-并返回其地址。
+Validates a new implementation contract in comparison with a reference contract, deploys the new implementation contract,
+and returns its address.
 
-要求设置 `referenceContract` 选项，或者合约具有 `@custom:oz-upgrades-from <reference>` 注释。
+Requires that either the `referenceContract` option is set, or the contract has a `@custom:oz-upgrades-from <reference>` annotation.
 
-使用此方法准备从您不直接控制或无法从您的部署环境使用的管理地址运行的升级。
+Use this method to prepare an upgrade to be run from an admin address you do not control directly or cannot use from your deployment environment.
 
-*参数：*
+*Parameters:*
 
-* `contractName` (`string`) - 要部署的合约的名称，例如 "MyContract.sol" 或 "MyContract.sol:MyContract" 或相对于项目根目录的 artifact 路径
-* `opts` (`struct Options`) - 常用选项
+* `contractName` (`string`) - Name of the contract to deploy, e.g. "MyContract.sol" or "MyContract.sol:MyContract" or artifact path relative to the project root directory
+* `opts` (`struct Options`) - Common options
 
-*返回*
+*Returns*
 
-* (`address`) - 新的实现合约的地址
+* (`address`) - Address of the new implementation contract
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-getAdminAddress-address-]]
 ==== `[.contract-item-name]#++getAdminAddress++#++(address proxy) → address++` [.item-kind]#internal#
 
-从其 ERC1967 管理存储槽获取透明代理的管理地址。
+Gets the admin address of a transparent proxy from its ERC1967 admin storage slot.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 透明代理的地址
+* `proxy` (`address`) - Address of a transparent proxy
 
-*返回*
+*Returns*
 
-* (`address`) - 管理地址
+* (`address`) - Admin address
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-getImplementationAddress-address-]]
 ==== `[.contract-item-name]#++getImplementationAddress++#++(address proxy) → address++` [.item-kind]#internal#
 
-从其 ERC1967 实现存储槽获取透明或 UUPS 代理的实现地址。
+Gets the implementation address of a transparent or UUPS proxy from its ERC1967 implementation storage slot.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 透明或 UUPS 代理的地址
+* `proxy` (`address`) - Address of a transparent or UUPS proxy
 
-*返回*
+*Returns*
 
-* (`address`) - 实现地址
+* (`address`) - Implementation address
 
 [.contract-item]
 [[LegacyUpgrades-Upgrades-getBeaconAddress-address-]]
 ==== `[.contract-item-name]#++getBeaconAddress++#++(address proxy) → address++` [.item-kind]#internal#
 
-从其 ERC1967 信标存储槽获取信标代理的信标地址。
+Gets the beacon address of a beacon proxy from its ERC1967 beacon storage slot.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 信标代理的地址
+* `proxy` (`address`) - Address of a beacon proxy
 
-*返回*
+*Returns*
 
-* (`address`) - 信标地址
+* (`address`) - Beacon address
 
 :upgradeProxy: pass:normal[xref:#LegacyUpgrades-UnsafeUpgrades-upgradeProxy-address-address-bytes-[`++upgradeProxy++`]]
 :upgradeProxy: pass:normal[xref:#LegacyUpgrades-UnsafeUpgrades-upgradeProxy-address-address-bytes-address-[`++upgradeProxy++`]]
@@ -294,22 +294,22 @@ import { Upgrades } from "openzeppelin-foundry-upgrades/LegacyUpgrades.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/LegacyUpgrades.sol";
 ```
 
-用于从 Forge 测试中管理可升级合约的库，无需验证。
+Library for managing upgradeable contracts from Forge tests, without validations.
 
-可以与 `forge coverage` 一起使用。需要先实例化实现合约。
-不需要 `--ffi`，并且每次运行前不需要进行干净的编译。
+Can be used with `forge coverage`. Requires implementation contracts to be instantiated first.
+Does not require `--ffi` and does not require a clean compilation before each run.
 
-不支持 OpenZeppelin Defender 部署。
+Not supported for OpenZeppelin Defender deployments.
 
-警告：不建议在 Forge 脚本中使用。
-`UnsafeUpgrades` 不验证您的合约是否升级安全，或者新的实现是否与以前的实现兼容。
-如果您希望运行验证，请使用 `Upgrades`。
+WARNING: Not recommended for use in Forge scripts.
+`UnsafeUpgrades` does not validate whether your contracts are upgrade safe or whether new implementations are compatible with previous ones.
+Use `Upgrades` if you want validations to be run.
 
-注意：仅用于使用 OpenZeppelin Contracts v4 升级现有部署。
-对于新的部署，请使用 OpenZeppelin Contracts v5 和 Upgrades.sol。
+NOTE: Only for upgrading existing deployments using OpenZeppelin Contracts v4.
+For new deployments, use OpenZeppelin Contracts v5 and Upgrades.sol.
 
 [.contract-index]
-.函数
+.Functions
 --
 * {xref-LegacyUpgrades-UnsafeUpgrades-upgradeProxy-address-address-bytes-}[`++upgradeProxy(proxy, newImpl, data)++`]
 * {xref-LegacyUpgrades-UnsafeUpgrades-upgradeProxy-address-address-bytes-address-}[`++upgradeProxy(proxy, newImpl, data, tryCaller)++`]
@@ -325,98 +325,99 @@ import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/LegacyUpgrades.sol
 [[LegacyUpgrades-UnsafeUpgrades-upgradeProxy-address-address-bytes-]]
 ==== `[.contract-item-name]#++upgradeProxy++#++(address proxy, address newImpl, bytes data)++` [.item-kind]#internal#
 
-将代理升级到新的实现合约地址。仅支持 UUPS 或透明代理。
+Upgrades a proxy to a new implementation contract address. Only supported for UUPS or transparent proxies.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 要升级的代理的地址
-* `newImpl` (`address`) - 要升级到的新实现合约的地址
-* `data` (`bytes`) - 在升级过程中要调用的任意函数的编码调用数据，如果升级过程中不需要调用任何函数，则为空
+* `proxy` (`address`) - Address of the proxy to upgrade
+* `newImpl` (`address`) - Address of the new implementation contract to upgrade to
+* `data` (`bytes`) - Encoded call data of an arbitrary function to call during the upgrade process, or empty if no function needs to be called during the upgrade
 
 [.contract-item]
 [[LegacyUpgrades-UnsafeUpgrades-upgradeProxy-address-address-bytes-address-]]
 ==== `[.contract-item-name]#++upgradeProxy++#++(address proxy, address newImpl, bytes data, address tryCaller)++` [.item-kind]#internal#
 
-注意：仅用于测试。如果在脚本中广播，请使用带有 `forge script` 的 `--sender <ADDRESS>` 选项代替。
+NOTE: For tests only. If broadcasting in scripts, use the `--sender <ADDRESS>` option with `forge script` instead.
 
-将代理升级到新的实现合约地址。仅支持 UUPS 或透明代理。
+Upgrades a proxy to a new implementation contract address. Only supported for UUPS or transparent proxies.
 
-此函数提供了一个额外的 `tryCaller` 参数，用于使用特定的调用者地址测试升级。
-如果在测试中遇到 `OwnableUnauthorizedAccount` 错误，请使用此选项。
+This function provides an additional `tryCaller` parameter to test an upgrade using a specific caller address.
+Use this if you encounter `OwnableUnauthorizedAccount` errors in your tests.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 要升级的代理的地址
-* `newImpl` (`address`) - 要升级到的新实现合约的地址
-* `data` (`bytes`) - 在升级过程中要调用的任意函数的编码调用数据，如果升级过程中不需要调用任何函数，则为空
-* `tryCaller` (`address`) - 用作升级函数调用者的地址。这应该是拥有代理或其 ProxyAdmin 的地址。
+* `proxy` (`address`) - Address of the proxy to upgrade
+* `newImpl` (`address`) - Address of the new implementation contract to upgrade to
+* `data` (`bytes`) - Encoded call data of an arbitrary function to call during the upgrade process, or empty if no function needs to be called during the upgrade
+* `tryCaller` (`address`) - Address to use as the caller of the upgrade function. This should be the address that owns the proxy or its ProxyAdmin.
 
 [.contract-item]
 [[LegacyUpgrades-UnsafeUpgrades-upgradeBeacon-address-address-]]
 ==== `[.contract-item-name]#++upgradeBeacon++#++(address beacon, address newImpl)++` [.item-kind]#internal#
 
-将信标升级到新的实现合约地址。
+Upgrades a beacon to a new implementation contract address.
 
-*参数：*
+*Parameters:*
 
-* `beacon` (`address`) - 要升级的信标的地址
-* `newImpl` (`address`) - 要升级到的新实现合约的地址
+* `beacon` (`address`) - Address of the beacon to upgrade
+* `newImpl` (`address`) - Address of the new implementation contract to upgrade to
 
 [.contract-item]
 [[LegacyUpgrades-UnsafeUpgrades-upgradeBeacon-address-address-address-]]
 ==== `[.contract-item-name]#++upgradeBeacon++#++(address beacon, address newImpl, address tryCaller)++` [.item-kind]#internal#
 
-注意：仅用于测试。如果在脚本中广播，请使用带有 `forge script` 的 `--sender <ADDRESS>` 选项代替。
+NOTE: For tests only. If broadcasting in scripts, use the `--sender <ADDRESS>` option with `forge script` instead.
 
-将信标升级到新的实现合约地址。
+Upgrades a beacon to a new implementation contract address.
 
-此函数提供了一个额外的 `tryCaller` 参数，用于使用特定的调用者地址测试升级。
-如果在测试中遇到 `OwnableUnauthorizedAccount` 错误，请使用此选项。
+This function provides an additional `tryCaller` parameter to test an upgrade using a specific caller address.
+Use this if you encounter `OwnableUnauthorizedAccount` errors in your tests.
 
-*参数：*
+*Parameters:*
 
-* `beacon` (`address`) - 要升级的信标的地址
-* `newImpl` (`address`) - 要升级到的新实现合约的地址
-* `tryCaller` (`address`) - 用作升级函数调用者的地址。这应该是拥有信标的地址。
+* `beacon` (`address`) - Address of the beacon to upgrade
+* `newImpl` (`address`) - Address of the new implementation contract to upgrade to
+* `tryCaller` (`address`) - Address to use as the caller of the upgrade function. This should be the address that owns the beacon.
 
 [.contract-item]
 [[LegacyUpgrades-UnsafeUpgrades-getAdminAddress-address-]]
 ==== `[.contract-item-name]#++getAdminAddress++#++(address proxy) → address++` [.item-kind]#internal#
 
-从其 ERC1967 管理存储槽获取透明代理的管理地址。
+Gets the admin address of a transparent proxy from its ERC1967 admin storage slot.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 透明代理的地址
+* `proxy` (`address`) - Address of a transparent proxy
 
-*返回*
+*Returns*
 
-* (`address`) - 管理地址
+* (`address`) - Admin address
 
 [.contract-item]
 [[LegacyUpgrades-UnsafeUpgrades-getImplementationAddress-address-]]
 ==== `[.contract-item-name]#++getImplementationAddress++#++(address proxy) → address++` [.item-kind]#internal#
 
-从其 ERC1967 实现存储槽获取透明或 UUPS 代理的实现地址。
+Gets the implementation address of a transparent or UUPS proxy from its ERC1967 implementation storage slot.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 透明或 UUPS 代理的地址
+* `proxy` (`address`) - Address of a transparent or UUPS proxy
 
-*返回*
+*Returns*
 
-* (`address`) - 实现地址
+* (`address`) - Implementation address
 
 [.contract-item]
 [[LegacyUpgrades-UnsafeUpgrades-getBeaconAddress-address-]]
 ==== `[.contract-item-name]#++getBeaconAddress++#++(address proxy) → address++` [.item-kind]#internal#
 
-从其 ERC1967 信标存储槽获取信标代理的信标地址。
+Gets the beacon address of a beacon proxy from its ERC1967 beacon storage slot.
 
-*参数：*
+*Parameters:*
 
-* `proxy` (`address`) - 信标代理的地址
+* `proxy` (`address`) - Address of a beacon proxy
 
-*返回*
+*Returns*
 
-* (`address`) - 信标地址
+* (`address`) - Beacon address
+

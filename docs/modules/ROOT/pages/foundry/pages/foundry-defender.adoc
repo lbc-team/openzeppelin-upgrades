@@ -1,18 +1,18 @@
-= OpenZeppelin Defender 与 Foundry
+= OpenZeppelin Defender with Foundry
 
-OpenZeppelin Foundry Upgrades 可以用于通过 https://docs.openzeppelin.com/defender/[OpenZeppelin Defender] 执行部署，它允许诸如 Gas 价格估算、重新提交以及自动化字节码和源代码验证等功能。
+OpenZeppelin Foundry Upgrades can be used for performing deployments through https://docs.openzeppelin.com/defender/[OpenZeppelin Defender], which allows for features such as gas pricing estimation, resubmissions, and automated bytecode and source code verification.
 
-WARNING: 无论你是否使用 `broadcast` cheatcode，Defender 部署**总是**广播到 live network。
-推荐的模式是将 Defender 脚本与依赖于 network forking 和模拟的脚本分开，以避免混合模拟和 live network 数据。
+WARNING: Defender deployments are **always** broadcast to a live network, regardless of whether you are using the `broadcast` cheatcode.
+The recommended pattern is to separate Defender scripts from scripts that rely on network forking and simulations, to avoid mixing simulation and live network data.
 
-== 安装
+== Installation
 
-参见 xref:foundry-upgrades#installation[与 Foundry 一起使用 - 安装]。
+See xref:foundry-upgrades#installation[Using with Foundry - Installation].
 
-== 前提条件
-1. 安装 https://nodejs.org/[Node.js]。
+== Prerequisites
+1. Install https://nodejs.org/[Node.js].
 
-2. 配置你的 `foundry.toml` 以启用 ffi、ast、build info 和存储布局：
+2. Configure your `foundry.toml` to enable ffi, ast, build info and storage layout:
 
 [source,json]
 ----
@@ -23,40 +23,40 @@ build_info = true
 extra_output = ["storageLayout"]
 ----
 
-NOTE: 元数据也必须包含在编译器输出中，默认情况下是包含的。
+NOTE: Metadata must also be included in the compiler output, which it is by default.  
 
 [start=3]
-3. 在你项目根目录下的 `.env` 文件中设置以下环境变量，使用来自 OpenZeppelin Defender 的 Team API 密钥和 secret：
+3. Set the following environment variables in your `.env` file at your project root, using your Team API key and secret from OpenZeppelin Defender:
 
 [source]
 ----
-DEFENDER_KEY=<你的 API 密钥>
-DEFENDER_SECRET=<你的 API secret>
+DEFENDER_KEY=<Your API key>
+DEFENDER_SECRET=<Your API secret>
 ----
 
-NOTE: 上述 API 密钥必须至少具有管理部署 (Manage Deployments) 的能力（可选地，需要管理 Relayer (Manage Relayers) 以创建具有 Relayer 的审批流程）。你可以在 https://defender.openzeppelin.com/#/settings/api-keys 配置你的 API 密钥。
+NOTE: The API key for the above must at least have the capability to Manage Deployments (optionally Manage Relayers is needed to create an approval process with a Relayer). You can configure your API keys at https://defender.openzeppelin.com/#/settings/api-keys.
 
-== 网络选择
+== Network Selection
 
-与 OpenZeppelin Defender 一起使用的网络由 Foundry 连接到的网络决定。
-如果你想确保 Defender 使用特定的网络，请在你的 `.env` 文件中设置 `DEFENDER_NETWORK` 环境变量，例如：
+The network that is used with OpenZeppelin Defender is determined by the network that Foundry is connected to.
+If you want to ensure that a specific network is used with Defender, set the `DEFENDER_NETWORK` environment variable in your `.env` file, for example:
 
 [source]
 ----
 DEFENDER_NETWORK=my-mainnet-fork
 ----
-如果设置了，这必须是 Defender 中公共、私有或 forked 网络的名称。如果 Foundry 在设置此变量时连接到不同的网络，则不会发生部署，而是会抛出错误。
+If set, this must be the name of a public, private or forked network in Defender. If Foundry is connected to a different network while this is set, the deployment will not occur and will throw an error instead.
 
-NOTE: 如果你在 Defender 中有多个具有相同 chainId 的 forked network，则需要这样做，在这种情况下，将使用名称与 `DEFENDER_NETWORK` 环境变量匹配的那个网络。
+NOTE: This is required if you have multiple forked networks in Defender with the same chainId, in which case the one with name matching the `DEFENDER_NETWORK` environment variable will be used.
 
-== 用法
+== Usage
 
-=== 可升级合约
+=== Upgradeable Contracts
 
-如果你正在部署可升级合约，请按照 xref:foundry-upgrades#installation[与 Foundry 一起使用 - 安装] 中所述使用 `Upgrades` 库，但在调用函数时设置选项 `defender.useDefenderDeploy = true`，以使所有部署都通过 OpenZeppelin Defender 进行。
+If you are deploying upgradeable contracts, use the `Upgrades` library as described in xref:foundry-upgrades#installation[Using with Foundry - Installation] but set the option `defender.useDefenderDeploy = true` when calling functions to cause all deployments to occur through OpenZeppelin Defender.
 
-**示例 1 - 部署代理**:
-要部署 UUPS 代理，创建一个名为 `Defender.s.sol` 的脚本，如下所示：
+**Example 1 - Deploying a proxy**:
+To deploy a UUPS proxy, create a script called `Defender.s.sol` like the following:
 [source,solidity]
 ----
 pragma solidity ^0.8.20;
@@ -93,20 +93,20 @@ contract DefenderScript is Script {
 }
 ----
 
-然后运行以下命令：
+Then run the following command:
 [source,console]
 ----
 forge script <path to the script you created above> --force --rpc-url <RPC URL for the network you want to use>
 ----
 
-上面的示例假设实现合约将其 `initialize` 函数的初始所有者地址作为参数。该脚本检索与在 Defender 中配置的升级审批流程关联的地址（例如多重签名地址），并将该地址用作初始所有者，以便它具有代理的升级权限。
+The above example assumes the implementation contract takes an initial owner address as an argument for its `initialize` function. The script retrieves the address associated with the upgrade approval process configured in Defender (such as a multisig address), and uses that address as the initial owner so that it can have upgrade rights for the proxy.
 
-此示例调用 `Upgrades.deployUUPSProxy` 函数，并使用 `defender.useDefenderDeploy` 选项，以使用 Defender 将实现合约和 UUPS 代理部署到连接的网络。该函数等待部署完成，每个合约可能需要几分钟，然后返回已部署的代理地址。在函数等待时，你可以在 OpenZeppelin Defender 的 https://defender.openzeppelin.com/v2/#/deploy[部署模块] 中监视你的部署状态。
+This example calls the `Upgrades.deployUUPSProxy` function with the `defender.useDefenderDeploy` option to deploy both the implementation contract and a UUPS proxy to the connected network using Defender. The function waits for the deployments to complete, which may take a few minutes per contract, then returns with the deployed proxy address. While the function is waiting, you can monitor your deployment status in OpenZeppelin Defender's https://defender.openzeppelin.com/v2/#/deploy[Deploy module].
 
-NOTE: 如果使用 EOA 或 Safe 进行部署，则必须在脚本运行时在 Defender 中提交待处理的部署。脚本会等待每个部署完成，然后继续。
+NOTE: If using an EOA or Safe to deploy, you must submit the pending deployments in Defender while the script is running. The script waits for each deployment to complete before it continues.
 
-**示例 2 - 提议升级代理**:
-要通过 Defender 提出升级，请创建一个如下所示的脚本：
+**Example 2 - Proposing an upgrade to a proxy**:
+To propose an upgrade through Defender, create a script like the following:
 [source,solidity]
 ----
 // SPDX-License-Identifier: MIT
@@ -135,15 +135,15 @@ contract DefenderScript is Script {
 }
 ----
 
-然后像示例 1 中一样运行脚本，然后转到生成的 URL 以查看和批准升级提案。
+Then run the script as in Example 1, and go the resulting URL to review and approve the upgrade proposal.
 
-=== 不可升级合约
+=== Non-Upgradeable Contracts
 
-如果你正在部署不可升级的合约，请从 `Defender.sol` 导入 `Defender` 库，并使用其函数通过 OpenZeppelin Defender 部署合约。
+If you are deploying non-upgradeable contracts, import the `Defender` library from `Defender.sol` and use its functions to deploy contracts through OpenZeppelin Defender.
 
-**示例：**
+**Example:**
 
-要部署不可升级的合约，创建一个名为 `Defender.s.sol` 的脚本，如下所示：
+To deploy a non-upgradeable contract, create a script called `Defender.s.sol` like the following:
 [source,solidity]
 ----
 pragma solidity ^0.8.20;
@@ -165,12 +165,12 @@ contract DefenderScript is Script {
 }
 ----
 
-然后运行以下命令：
+Then run the following command:
 [source,console]
 ----
 forge script <path to the script you created above> --force --rpc-url <RPC URL for the network you want to use>
 ----
 
-上面的示例调用 `Defender.deployContract` 函数，以使用 Defender 将指定的合约部署到连接的网络。该函数等待部署完成，这可能需要几分钟，然后返回已部署的合约地址。在函数等待时，你可以在 OpenZeppelin Defender 的 https://defender.openzeppelin.com/v2/#/deploy[部署模块] 中监视你的部署状态。
+The above example calls the `Defender.deployContract` function to deploy the specified contract to the connected network using Defender. The function waits for the deployment to complete, which may take a few minutes, then returns with the deployed contract address. While the function is waiting, you can monitor your deployment status in OpenZeppelin Defender's https://defender.openzeppelin.com/v2/#/deploy[Deploy module].
 
-NOTE: 如果使用 EOA 或 Safe 进行部署，则必须在脚本运行时在 Defender 中提交待处理的部署。脚本会等待部署完成，然后继续。
+NOTE: If using an EOA or Safe to deploy, you must submit the pending deployment in Defender while the script is running. The script waits for the deployment to complete before it continues.
